@@ -1,0 +1,11 @@
+[
+  {"ticker": "AAPL", "name": "Apple Inc.", "sector": "Technology"},
+  {"ticker": "MSFT", "name": "Microsoft Corporation", "sector": "Technology"},
+  {"ticker": "GOOGL", "name": "Alphabet Inc.", "sector": "Technology"},
+  {"ticker": "NVDA", "name": "NVIDIA Corporation", "sector": "Technology"},
+  {"ticker": "BRK-B", "name": "Berkshire Hathaway Inc.", "sector": "Financials"},
+  {"ticker": "JPM", "name": "JPMorgan Chase & Co.", "sector": "Financials"},
+  {"ticker": "JNJ", "name": "Johnson & Johnson", "sector": "Healthcare"},
+  {"ticker": "KO", "name": "The Coca-Cola Company", "sector": "Consumer Defensive"},
+  {"ticker": "O", "name": "Realty Income Corporation", "sector": "Real Estate"}
+]

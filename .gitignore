@@ -19,6 +19,7 @@ ENV/
 .env
 
 # Data Cache
+data/cache/
 data/*.csv
 data/*.json
 data/*.pkl

@@ -9,7 +9,7 @@ A Python-based value investing portfolio tracker and intrinsic value analyzer.
 - **Key Ratios Dashboard** — P/E, P/B, EV/EBITDA, ROE, ROIC, Debt/Equity, and more
 - **Margin of Safety** — Visual comparison of market price vs. intrinsic value
 - **Portfolio Tracker** — Track your value investing positions and performance
-- **Watchlist** — Monitor undervalued stocks with automated alerts
+- **Watchlist (Manual)** — Monitor a hand-picked watchlist configured manually in `config/watchlist.json` (plans to add an automated screener like Finviz in the future).
 - **Step-by-Step Analysis** — Guided valuation process with explanations
 
 ## 🛠️ Tech Stack
@@ -41,20 +41,30 @@ fundamental-analysis-hub/
 
 ## 🚀 Getting Started
 
-```bash
-# Clone the repository
-git clone https://github.com/YOUR_USERNAME/fundamental-analysis-hub.git
+```powershell
+# 1. Clonar el repositorio
+git clone https://github.com/ronaldreighsrsc/fundamental-analysis-hub.git
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
+# 2. Crear el entorno virtual (usando py en Windows)
+py -m venv venv
 
-# Install dependencies
+# 3. Activar el entorno virtual en Windows:
+# En PowerShell (Editor por defecto en VS Code):
+.\venv\Scripts\Activate.ps1
+# O en CMD:
+venv\Scripts\activate
+# O en Git Bash / Linux / Mac:
+source venv/Scripts/activate
+
+# 4. Instalar las dependencias
 pip install -r requirements.txt
 
-# Configure environment
-cp .env.example .env
-# Edit .env with your API keys
+# 5. Probar que todo funciona correctamente
+python verify_setup.py
+
+# 6. Configurar variables de entorno
+copy .env.example .env
+# Luego edita el archivo .env con tus credenciales
 ```
 
 ## 📝 License
