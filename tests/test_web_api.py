@@ -122,10 +122,12 @@ def test_api_deposit_and_dca(web_server_instance):
     res = urllib.request.urlopen(req)
     assert res.status == 200
 
-    # Simulacion recurrente DCA
+    # Simulacion recurrente DCA iniciando en Octubre 2026 dia 1
     dca_payload = json.dumps({
         "amount": 500.0,
         "months": 3,
+        "start_date": "2026-10-01",
+        "day_of_month": 1,
         "notes": "DCA test",
     }).encode("utf-8")
 
@@ -138,6 +140,24 @@ def test_api_deposit_and_dca(web_server_instance):
     assert res_dca.status == 200
     dca_data = json.loads(res_dca.read().decode("utf-8"))
     assert dca_data["created_count"] == 3
+
+
+def test_api_reset(web_server_instance):
+    base_url, _ = web_server_instance
+    reset_payload = json.dumps({
+        "initial_cash": 100000.0,
+    }).encode("utf-8")
+
+    req = urllib.request.Request(
+        f"{base_url}/api/reset",
+        data=reset_payload,
+        headers={"Content-Type": "application/json"},
+    )
+    res = urllib.request.urlopen(req)
+    assert res.status == 200
+    data = json.loads(res.read().decode("utf-8"))
+    assert data["success"] is True
+    assert data["initial_cash"] == 100000.0
 
 
 def test_api_buy_insufficient_funds(web_server_instance):

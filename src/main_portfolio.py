@@ -46,7 +46,9 @@ def run():
     parser.add_argument("--plot", action="store_true", help="Generar y abrir dashboard interactivo Plotly en el navegador")
     parser.add_argument("--benchmark", type=str, default="SPY", help="Benchmark de comparacion (por defecto SPY / S&P 500)")
     parser.add_argument("--simulate-monthly", type=float, default=None, help="Simular serie historica de aportes mensuales recurrentes (ej. --simulate-monthly 500 --months 6)")
-    parser.add_argument("--months", type=int, default=6, help="Cantidad de meses para la simulacion de aportes recurrentes (por defecto 6)")
+    parser.add_argument("--months", type=int, default=1, help="Cantidad de meses para la simulacion de aportes recurrentes (por defecto 1)")
+    parser.add_argument("--start-date", type=str, default="2026-10-01", help="Fecha de inicio para aportes (por defecto 2026-10-01)")
+    parser.add_argument("--day", type=int, default=1, help="Dia del mes para cada aporte mensual (por defecto 1)")
     parser.add_argument("--reset", action="store_true", help="Reiniciar portafolio con $100.000 USD de capital simulado")
     parser.add_argument("--initial-cash", type=float, default=100000.0, help="Monto para reiniciar el portafolio (usar con --reset)")
     parser.add_argument("--backup", action="store_true", help="Crear respaldo JSON portable del portafolio en exports/backups/")
@@ -123,11 +125,13 @@ def run():
             created = manager.simulate_monthly_deposits(
                 monthly_amount=args.simulate_monthly,
                 months=args.months,
+                start_date=args.start_date,
+                day_of_month=args.day,
                 notes=args.notes or "Aporte mensual DCA",
             )
             console.print(
                 f"[bold green]Simulacion completada: {len(created)} aportes mensuales de ${args.simulate_monthly:,.2f} USD "
-                f"registrados a lo largo de {args.months} meses.[/bold green]\n"
+                f"(iniciando {args.start_date} dia {args.day}) registrados.[/bold green]\n"
             )
         except Exception as e:
             console.print(f"[bold red]Error en simulacion de aportes: {e}[/bold red]\n")

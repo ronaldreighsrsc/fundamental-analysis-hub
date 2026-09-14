@@ -163,9 +163,18 @@ def test_export_csv(temp_portfolio_mgr, tmp_path):
 
 
 def test_simulate_monthly_deposits(temp_portfolio_mgr):
-    # Simular 4 aportes mensuales de $500
-    created = temp_portfolio_mgr.simulate_monthly_deposits(monthly_amount=500.0, months=4)
+    # Simular 4 aportes mensuales de $500 iniciando el 1 de Octubre de 2026
+    created = temp_portfolio_mgr.simulate_monthly_deposits(
+        monthly_amount=500.0,
+        months=4,
+        start_date="2026-10-01",
+        day_of_month=1,
+    )
     assert len(created) == 4
+    assert created[0]["timestamp"].startswith("2026-10-01")
+    assert created[1]["timestamp"].startswith("2026-11-01")
+    assert created[2]["timestamp"].startswith("2026-12-01")
+    assert created[3]["timestamp"].startswith("2027-01-01")
 
     summary = temp_portfolio_mgr.get_summary()
     # Initial 100.000 + (4 * 500) = 102.000

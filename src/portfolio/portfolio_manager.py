@@ -213,11 +213,14 @@ class PortfolioManager:
     def simulate_monthly_deposits(
         self,
         monthly_amount: float = 500.0,
-        months: int = 6,
-        notes: str = "Aporte mensual DCA",
+        months: int = 1,
+        start_date: Optional[str] = "2026-10-01",
+        day_of_month: int = 1,
+        notes: str = "Aporte mensual DCA (día 1)",
     ) -> List[Dict[str, Any]]:
         """
-        Simula una serie de aportes mensuales recurrentes distribuidos en el tiempo hacia el pasado.
+        Registra o simula una serie de aportes mensuales recurrentes el dia 1 de cada mes,
+        iniciando en una fecha especifica (por defecto 2026-10-01).
         Permite evaluar el efecto de Dollar Cost Averaging (DCA) y separar aportes de rentabilidad.
         """
         if monthly_amount <= 0:
@@ -225,13 +228,27 @@ class PortfolioManager:
         if months <= 0:
             raise ValueError("La cantidad de meses debe ser al menos 1.")
 
-        now = datetime.now()
         created_txs = []
         txs = self._load_transactions()
 
+        if start_date:
+            try:
+                base_dt = datetime.strptime(start_date[:10], "%Y-%m-%d")
+            except Exception:
+                base_dt = datetime(2026, 10, 1)
+        else:
+            base_dt = datetime(2026, 10, 1)
+
+        start_year = base_dt.year
+        start_month = base_dt.month
+        target_day = max(1, min(28, day_of_month))
+
         for i in range(months):
-            days_ago = int(30.4375 * (months - 1 - i))
-            tx_time = now - timedelta(days=days_ago)
+            total_months = (start_month - 1) + i
+            y = start_year + (total_months // 12)
+            m = (total_months % 12) + 1
+            tx_time = datetime(y, m, target_day, 9, 0, 0)
+
             tx = {
                 "id": str(uuid.uuid4()),
                 "timestamp": tx_time.isoformat(),
@@ -241,7 +258,7 @@ class PortfolioManager:
                 "price": float(monthly_amount),
                 "fee": 0.0,
                 "total": float(monthly_amount),
-                "notes": f"{notes} ({i + 1}/{months})",
+                "notes": f"{notes} ({m:02d}/{y})",
             }
             txs.append(tx)
             created_txs.append(tx)
@@ -250,6 +267,7 @@ class PortfolioManager:
         txs.sort(key=lambda x: x.get("timestamp", ""))
         self._save_transactions(txs)
         return created_txs
+
 
 
     def withdraw(self, amount: float, notes: str = "Retiro de capital") -> Dict[str, Any]:

@@ -1,62 +1,7 @@
 [
   {
-    "id": "e11267a9-6536-403c-8522-0950dd8f2b78",
-    "timestamp": "2026-04-15T15:29:20.215542",
-    "type": "DEPOSIT",
-    "ticker": "CASH",
-    "shares": 1.0,
-    "price": 500.0,
-    "fee": 0.0,
-    "total": 500.0,
-    "notes": "Aporte mensual DCA (1/6)"
-  },
-  {
-    "id": "e9625328-7adb-41e0-b7a3-c2f0bfa4c26a",
-    "timestamp": "2026-05-16T15:29:20.215542",
-    "type": "DEPOSIT",
-    "ticker": "CASH",
-    "shares": 1.0,
-    "price": 500.0,
-    "fee": 0.0,
-    "total": 500.0,
-    "notes": "Aporte mensual DCA (2/6)"
-  },
-  {
-    "id": "47b55778-1395-49b0-abb7-510369617e70",
-    "timestamp": "2026-06-15T15:29:20.215542",
-    "type": "DEPOSIT",
-    "ticker": "CASH",
-    "shares": 1.0,
-    "price": 500.0,
-    "fee": 0.0,
-    "total": 500.0,
-    "notes": "Aporte mensual DCA (3/6)"
-  },
-  {
-    "id": "d8960af9-1201-4f7b-9de8-a16636eb796c",
-    "timestamp": "2026-07-16T15:29:20.215542",
-    "type": "DEPOSIT",
-    "ticker": "CASH",
-    "shares": 1.0,
-    "price": 500.0,
-    "fee": 0.0,
-    "total": 500.0,
-    "notes": "Aporte mensual DCA (4/6)"
-  },
-  {
-    "id": "edcb6f30-558c-4643-9735-676a9c050aa1",
-    "timestamp": "2026-08-15T15:29:20.215542",
-    "type": "DEPOSIT",
-    "ticker": "CASH",
-    "shares": 1.0,
-    "price": 500.0,
-    "fee": 0.0,
-    "total": 500.0,
-    "notes": "Aporte mensual DCA (5/6)"
-  },
-  {
-    "id": "05ad0ee5-3f89-4489-8577-635691bb5ebd",
-    "timestamp": "2026-09-14T13:38:27.142435",
+    "id": "42b50e18-85a8-4ca3-909f-a22f535e5a4c",
+    "timestamp": "2026-09-14T16:10:45.634902",
     "type": "DEPOSIT",
     "ticker": "CASH",
     "shares": 1.0,
@@ -64,38 +9,5 @@
     "fee": 0.0,
     "total": 100000.0,
     "notes": "Reinicio de portafolio con $100,000.00 USD"
-  },
-  {
-    "id": "c25c83ba-018f-404d-a441-08db921393f9",
-    "timestamp": "2026-09-14T13:39:27.618964",
-    "type": "BUY",
-    "ticker": "DVA",
-    "shares": 50.0,
-    "price": 187.95,
-    "fee": 0.0,
-    "total": 9397.5,
-    "notes": "Tesis duopolio dialisis"
-  },
-  {
-    "id": "7b1cf2cd-14ab-4ca8-a1ee-f2b4fba4194f",
-    "timestamp": "2026-09-14T13:42:36.363236",
-    "type": "BUY",
-    "ticker": "AAPL",
-    "shares": 30.0,
-    "price": 332.635,
-    "fee": 0.0,
-    "total": 9979.05,
-    "notes": "Lider tecnologico ecosistema cerrado"
-  },
-  {
-    "id": "da3601e6-ee52-42e6-9e09-18683923302c",
-    "timestamp": "2026-09-14T15:29:20.215542",
-    "type": "DEPOSIT",
-    "ticker": "CASH",
-    "shares": 1.0,
-    "price": 500.0,
-    "fee": 0.0,
-    "total": 500.0,
-    "notes": "Aporte mensual DCA (6/6)"
   }
 ]

@@ -301,7 +301,7 @@
         <!-- TAB 3: APORTE MENSUAL (DCA) -->
         <form id="form-dca" class="trading-form-body" style="display: none;">
           <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
-            Inyecta aportes de capital periódicos para evaluar tu estrategia de Dollar Cost Averaging (DCA) desacoplada del retorno de mercado.
+            Inyecta aportes sistemáticos el día 1 de cada mes para evaluar tu estrategia de Dollar Cost Averaging (DCA), iniciando en Octubre 2026.
           </div>
 
           <div class="form-group">
@@ -309,22 +309,35 @@
             <input type="number" id="dca-amount" class="form-control" value="500.00" step="50" min="10" required>
           </div>
 
+          <div class="form-row" style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="dca-start-date">Mes de Inicio</label>
+              <input type="date" id="dca-start-date" class="form-control" value="2026-10-01">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="dca-day">Día del Mes</label>
+              <input type="number" id="dca-day" class="form-control" value="1" min="1" max="28">
+            </div>
+          </div>
+
           <div class="form-group">
-            <label class="form-label" for="dca-mode">Tipo de Aporte</label>
+            <label class="form-label" for="dca-mode">Duración del Plan DCA</label>
             <select id="dca-mode" class="form-control">
-              <option value="single">Aporte Único en Tiempo Real</option>
-              <option value="multi-6">Simular Histórico: 6 Meses ($500/mes = $3.000)</option>
-              <option value="multi-12">Simular Histórico: 12 Meses ($500/mes = $6.000)</option>
+              <option value="oct-single">1 Mes (Día 1 de Octubre 2026 - $500)</option>
+              <option value="multi-3">3 Meses (Oct, Nov, Dic 2026 - $1.500)</option>
+              <option value="multi-6">6 Meses (Oct 2026 a Mar 2027 - $3.000)</option>
+              <option value="multi-12">12 Meses (Oct 2026 a Sep 2027 - $6.000)</option>
+              <option value="single-now">Aporte extraordinario hoy (Tiempo Real)</option>
             </select>
           </div>
 
           <div class="form-group">
             <label class="form-label" for="dca-notes">Nota de Transacción</label>
-            <input type="text" id="dca-notes" class="form-control" value="Aporte mensual sistemático DCA">
+            <input type="text" id="dca-notes" class="form-control" value="Aporte mensual DCA (día 1)">
           </div>
 
           <button type="submit" class="btn-cta-deposit" id="btn-submit-dca">
-            Inyectar Capital DCA
+            Programar Aporte DCA
           </button>
         </form>
       </aside>

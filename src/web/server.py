@@ -180,9 +180,17 @@ class PortfolioWebHandler(SimpleHTTPRequestHandler):
 
             elif path == "/api/simulate-monthly":
                 amount = float(body.get("amount", 500.0))
-                months = int(body.get("months", 6))
-                notes = body.get("notes", "Aporte mensual sistematico DCA")
-                txs = self.manager.simulate_monthly_deposits(monthly_amount=amount, months=months, notes=notes)
+                months = int(body.get("months", 1))
+                start_date = body.get("start_date", "2026-10-01")
+                day_of_month = int(body.get("day_of_month", 1))
+                notes = body.get("notes", "Aporte mensual DCA (día 1)")
+                txs = self.manager.simulate_monthly_deposits(
+                    monthly_amount=amount,
+                    months=months,
+                    start_date=start_date,
+                    day_of_month=day_of_month,
+                    notes=notes,
+                )
                 self._send_json({"success": True, "created_count": len(txs)})
                 return
 

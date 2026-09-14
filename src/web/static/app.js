@@ -728,38 +728,50 @@ document.addEventListener('DOMContentLoaded', () => {
     const amount = parseFloat(document.getElementById('dca-amount').value);
     const mode = document.getElementById('dca-mode').value;
     const notes = document.getElementById('dca-notes').value.trim();
+    const startDate = document.getElementById('dca-start-date')?.value || '2026-10-01';
+    const dayOfMonth = parseInt(document.getElementById('dca-day')?.value || '1', 10);
 
     const btn = document.getElementById('btn-submit-dca');
     btn.disabled = true;
     btn.textContent = 'Procesando aporte...';
 
     try {
-      if (mode === 'single') {
+      if (mode === 'single-now') {
         const res = await fetch('/api/deposit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount, notes: notes || 'Aporte mensual DCA' }),
+          body: JSON.stringify({ amount, notes: notes || 'Aporte extraordinario en caja' }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Error al depositar');
         showToast(`¡Depósito de $${amount.toFixed(2)} registrado con éxito!`, 'success');
       } else {
-        const months = mode === 'multi-12' ? 12 : 6;
+        let months = 1;
+        if (mode === 'multi-3') months = 3;
+        else if (mode === 'multi-6') months = 6;
+        else if (mode === 'multi-12') months = 12;
+
         const res = await fetch('/api/simulate-monthly', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount, months, notes }),
+          body: JSON.stringify({
+            amount,
+            months,
+            start_date: startDate,
+            day_of_month: dayOfMonth,
+            notes: notes || 'Aporte mensual DCA (día 1)',
+          }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Error en simulación');
-        showToast(`¡Simulados ${months} aportes de $${amount.toFixed(2)} ($${(amount * months).toFixed(2)} total)!`, 'success');
+        showToast(`¡Simulados ${months} aportes de $${amount.toFixed(2)} ($${(amount * months).toFixed(2)} total) iniciando el ${startDate}!`, 'success');
       }
       await refreshAll();
     } catch (err) {
       showToast(err.message, 'error');
     } finally {
       btn.disabled = false;
-      btn.textContent = 'Inyectar Capital DCA';
+      btn.textContent = 'Programar Aporte DCA';
     }
   });
 
