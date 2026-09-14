@@ -126,3 +126,9 @@ class BondETFAnalyzer(AssetAnalyzer):
             "total_assets": self.info.get("totalAssets"),
             "ytd_return": self.info.get("ytdReturn"),
         }
+
+
+# Aliases de conveniencia
+EquityEtfAnalyzer = EquityETFAnalyzer
+BondEtfAnalyzer = BondETFAnalyzer
+

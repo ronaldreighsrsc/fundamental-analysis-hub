@@ -67,7 +67,11 @@ class REITAnalyzer(AssetAnalyzer):
         """
         cf = self.annual.get("cash_flow", {}).get(year, {})
         ffo = self._calc_ffo(year)
-        dividends_paid = cf.get("Common Stock Dividend Paid") or 0
+        dividends_paid = (
+            cf.get("Common Stock Dividend Paid")
+            or cf.get("Cash Dividends Paid")
+            or 0
+        )
 
         if ffo <= 0:
             return 0.0
@@ -130,3 +134,8 @@ class REITAnalyzer(AssetAnalyzer):
             "price_to_book": self.info.get("priceToBook"),
             "debt_to_equity": self.info.get("debtToEquity"),
         }
+
+
+# Alias de conveniencia
+ReitAnalyzer = REITAnalyzer
+
