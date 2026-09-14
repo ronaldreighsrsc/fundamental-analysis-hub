@@ -24,6 +24,8 @@ data/*.csv
 data/*.json
 data/*.pkl
 !data/.gitkeep
+!data/portfolio/*.json
+!data/portfolio/.gitkeep
 
 # Jupyter
 .ipynb_checkpoints/
@@ -43,5 +45,7 @@ logs/
 
 # Generated Exports
 exports/charts/*.html
+exports/backups/*.json
+exports/*.csv
 !exports/.gitkeep
 

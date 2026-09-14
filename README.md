@@ -156,6 +156,15 @@ python src/main_portfolio.py --deposit --price 10000.00 --notes "Aporte mensual"
 # Ver historial completo de transacciones auditadas
 python src/main_portfolio.py --history
 
+# Exportar historial a CSV para analisis en Excel o Power BI
+python src/main_portfolio.py --export-csv
+
+# Crear copia de seguridad portable (JSON) para transferir a otro PC o migrar
+python src/main_portfolio.py --backup
+
+# Restaurar portafolio desde un archivo de respaldo JSON
+python src/main_portfolio.py --restore exports/backups/portfolio_backup_YYYYMMDD_HHMMSS.json
+
 # Reiniciar simulador a los $100.000 USD iniciales
 python src/main_portfolio.py --reset
 ```

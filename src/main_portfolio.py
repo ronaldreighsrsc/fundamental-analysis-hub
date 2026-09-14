@@ -46,11 +46,47 @@ def run():
     parser.add_argument("--plot", action="store_true", help="Generar y abrir dashboard interactivo Plotly en el navegador")
     parser.add_argument("--reset", action="store_true", help="Reiniciar portafolio con $100.000 USD de capital simulado")
     parser.add_argument("--initial-cash", type=float, default=100000.0, help="Monto para reiniciar el portafolio (usar con --reset)")
+    parser.add_argument("--backup", action="store_true", help="Crear respaldo JSON portable del portafolio en exports/backups/")
+    parser.add_argument("--restore", type=str, default=None, help="Restaurar portafolio desde archivo JSON de respaldo")
+    parser.add_argument("--export-csv", action="store_true", help="Exportar todas las transacciones auditadas a formato CSV")
+
 
     args = parser.parse_args()
     manager = PortfolioManager()
 
-    # 1. Reinicio de portafolio
+    # 1. Respaldo y Restauracion
+    if args.backup:
+        try:
+            saved_path = manager.export_backup()
+            console.print(f"[bold green]Respaldo exportado exitosamente a:[/bold green]\n[cyan]{saved_path}[/cyan]\n")
+            return
+        except Exception as e:
+            console.print(f"[bold red]Error al crear respaldo: {e}[/bold red]\n")
+            return
+
+    if args.restore:
+        try:
+            res = manager.import_backup(args.restore)
+            console.print(
+                f"[bold green]Portafolio restaurado exitosamente desde:[/bold green] [cyan]{args.restore}[/cyan]\n"
+                f"[white]Transacciones cargadas: {res['transactions_count']} | Capital inicial: ${res['initial_cash']:,.2f}[/white]\n"
+            )
+            render_terminal_portfolio(manager)
+            return
+        except Exception as e:
+            console.print(f"[bold red]Error al restaurar respaldo: {e}[/bold red]\n")
+            return
+
+    if args.export_csv:
+        try:
+            csv_path = manager.export_csv()
+            console.print(f"[bold green]Historial de transacciones exportado a CSV:[/bold green]\n[cyan]{csv_path}[/cyan]\n")
+            return
+        except Exception as e:
+            console.print(f"[bold red]Error al exportar CSV: {e}[/bold red]\n")
+            return
+
+    # 2. Reinicio de portafolio
     if args.reset:
         confirm = True
         if confirm:
@@ -61,7 +97,7 @@ def run():
             render_terminal_portfolio(manager)
             return
 
-    # 2. Depositos y retiros
+    # 3. Depositos y retiros
     if args.deposit is not None:
         try:
             tx = manager.deposit(args.deposit, notes=args.notes or "Aporte de capital simulado")

@@ -1,6 +1,7 @@
 import os
 import json
 import uuid
+from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 import yfinance as yf
@@ -80,6 +81,30 @@ class PortfolioManager:
         try:
             with open(self.transactions_path, "w", encoding="utf-8") as f:
                 json.dump(transactions, f, indent=2, ensure_ascii=False)
+            return True
+        except Exception:
+            return False
+
+    def _load_config(self) -> Dict[str, Any]:
+        """Lee la configuracion del portafolio."""
+        if not os.path.exists(self.config_path):
+            return {
+                "portfolio_name": "Paper Trading Portfolio",
+                "base_currency": "USD",
+                "created_at": datetime.now().isoformat(),
+                "initial_cash": self.DEFAULT_INITIAL_CASH,
+            }
+        try:
+            with open(self.config_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {"initial_cash": self.DEFAULT_INITIAL_CASH}
+
+    def _save_config(self, config: Dict[str, Any]) -> bool:
+        """Guarda la configuracion del portafolio en disco."""
+        try:
+            with open(self.config_path, "w", encoding="utf-8") as f:
+                json.dump(config, f, indent=2, ensure_ascii=False)
             return True
         except Exception:
             return False
@@ -513,3 +538,79 @@ class PortfolioManager:
         """Retorna todas las transacciones ordenadas de mas reciente a mas antigua."""
         txs = self._load_transactions()
         return list(reversed(txs))
+
+    def export_backup(self, filepath: Optional[str] = None) -> str:
+        """
+        Exporta el portafolio completo (configuracion + transacciones) a un archivo JSON portable.
+        Ideal para transferir a otro PC, respaldar en la nube o migrar.
+        """
+        if filepath is None:
+            backup_dir = Path("exports") / "backups"
+            backup_dir.mkdir(parents=True, exist_ok=True)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filepath = str(backup_dir / f"portfolio_backup_{timestamp}.json")
+
+        dest_path = Path(filepath)
+        dest_path.parent.mkdir(parents=True, exist_ok=True)
+
+        backup_data = {
+            "version": "1.0",
+            "exported_at": datetime.now().isoformat(),
+            "config": self._load_config(),
+            "transactions": self._load_transactions(),
+        }
+
+        with open(dest_path, "w", encoding="utf-8") as f:
+            json.dump(backup_data, f, indent=2, ensure_ascii=False)
+
+        return str(dest_path.resolve())
+
+    def import_backup(self, filepath: str) -> Dict[str, Any]:
+        """
+        Restaura el portafolio a partir de un archivo JSON de respaldo.
+        Sobrescribe el estado local con las transacciones y configuracion del respaldo.
+        """
+        path = Path(filepath)
+        if not path.exists():
+            raise FileNotFoundError(f"No se encontro el archivo de respaldo en: {filepath}")
+
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        if "transactions" not in data or "config" not in data:
+            raise ValueError("El archivo de respaldo no tiene el formato esperado (debe contener 'config' y 'transactions').")
+
+        self._save_config(data["config"])
+        self._save_transactions(data["transactions"])
+
+        return {
+            "restored_at": datetime.now().isoformat(),
+            "transactions_count": len(data["transactions"]),
+            "initial_cash": data["config"].get("initial_cash", 100_000.0),
+        }
+
+    def export_csv(self, filepath: Optional[str] = None) -> str:
+        """
+        Exporta el libro de transacciones a formato CSV para auditorias en Excel o Power BI.
+        """
+        import pandas as pd
+
+        txs = self.get_transaction_history()
+        if filepath is None:
+            export_dir = Path("exports")
+            export_dir.mkdir(parents=True, exist_ok=True)
+            timestamp = datetime.now().strftime("%Y%m%d")
+            filepath = str(export_dir / f"portfolio_transactions_{timestamp}.csv")
+
+        dest_path = Path(filepath)
+        dest_path.parent.mkdir(parents=True, exist_ok=True)
+
+        df = pd.DataFrame(txs)
+        if not df.empty:
+            df.to_csv(dest_path, index=False, encoding="utf-8")
+        else:
+            with open(dest_path, "w", encoding="utf-8") as f:
+                f.write("id,timestamp,type,ticker,shares,price,fee,total,notes\n")
+
+        return str(dest_path.resolve())
+

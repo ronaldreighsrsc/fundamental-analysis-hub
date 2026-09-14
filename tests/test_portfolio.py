@@ -126,3 +126,38 @@ def test_portfolio_analytics(temp_portfolio_mgr):
     conc = analytics.get_concentration_metrics()
     assert "hhi_index" in conc
     assert "top1_position_pct" in conc
+
+
+def test_export_and_import_backup(temp_portfolio_mgr, tmp_path):
+    temp_portfolio_mgr.buy(ticker="BACKUP_STOCK", shares=15, price=200.0, notes="Compra para backup")
+    backup_file = str(tmp_path / "backup.json")
+
+    # Exportar
+    saved_path = temp_portfolio_mgr.export_backup(filepath=backup_file)
+    assert saved_path == backup_file
+
+    # Crear nuevo manager vacio y restaurar
+    new_dir = tmp_path / "restored_portfolio"
+    new_mgr = PortfolioManager(data_dir=str(new_dir))
+    new_mgr.reset_portfolio(initial_cash=10_000.0)
+
+    # Importar backup
+    res = new_mgr.import_backup(backup_file)
+    assert res["transactions_count"] >= 2
+    positions = new_mgr.get_positions()
+    assert "BACKUP_STOCK" in positions
+    assert positions["BACKUP_STOCK"]["shares"] == 15.0
+
+
+def test_export_csv(temp_portfolio_mgr, tmp_path):
+    temp_portfolio_mgr.buy(ticker="CSV_STOCK", shares=5, price=50.0)
+    csv_file = str(tmp_path / "transactions.csv")
+
+    saved_path = temp_portfolio_mgr.export_csv(filepath=csv_file)
+    assert saved_path == csv_file
+
+    with open(csv_file, "r", encoding="utf-8") as f:
+        content = f.read()
+    assert "CSV_STOCK" in content
+    assert "BUY" in content
+
