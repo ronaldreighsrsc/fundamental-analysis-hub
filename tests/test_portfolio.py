@@ -161,3 +161,36 @@ def test_export_csv(temp_portfolio_mgr, tmp_path):
     assert "CSV_STOCK" in content
     assert "BUY" in content
 
+
+def test_simulate_monthly_deposits(temp_portfolio_mgr):
+    # Simular 4 aportes mensuales de $500
+    created = temp_portfolio_mgr.simulate_monthly_deposits(monthly_amount=500.0, months=4)
+    assert len(created) == 4
+
+    summary = temp_portfolio_mgr.get_summary()
+    # Initial 100.000 + (4 * 500) = 102.000
+    assert summary["cash_balance"] == 102_000.0
+    assert summary["net_deposits"] == 102_000.0
+
+
+def test_benchmark_comparison_and_timeline(temp_portfolio_mgr):
+    temp_portfolio_mgr.simulate_monthly_deposits(monthly_amount=500.0, months=3)
+    temp_portfolio_mgr.buy(ticker="MOCK_STOCK", shares=10, price=100.0)
+
+    analytics = PortfolioAnalytics(temp_portfolio_mgr)
+    bench_data = analytics.get_benchmark_comparison(benchmark_ticker="SPY")
+
+    assert bench_data["benchmark_ticker"] == "SPY"
+    metrics = bench_data["metrics"]
+    assert "current_nav" in metrics
+    assert "cumulative_deposits" in metrics
+    assert "alpha_pct" in metrics
+    assert metrics["cumulative_deposits"] == 101_500.0
+
+    timeline = bench_data["timeline"]
+    assert len(timeline["dates"]) >= 3
+    assert len(timeline["portfolio_nav"]) == len(timeline["dates"])
+    assert len(timeline["cumulative_deposits"]) == len(timeline["dates"])
+    assert len(timeline["benchmark_nav"]) == len(timeline["dates"])
+
+

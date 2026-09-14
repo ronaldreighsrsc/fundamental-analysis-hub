@@ -44,11 +44,15 @@ def run():
     # Vistas y utilidades
     parser.add_argument("--history", action="store_true", help="Mostrar libro contable completo de transacciones")
     parser.add_argument("--plot", action="store_true", help="Generar y abrir dashboard interactivo Plotly en el navegador")
+    parser.add_argument("--benchmark", type=str, default="SPY", help="Benchmark de comparacion (por defecto SPY / S&P 500)")
+    parser.add_argument("--simulate-monthly", type=float, default=None, help="Simular serie historica de aportes mensuales recurrentes (ej. --simulate-monthly 500 --months 6)")
+    parser.add_argument("--months", type=int, default=6, help="Cantidad de meses para la simulacion de aportes recurrentes (por defecto 6)")
     parser.add_argument("--reset", action="store_true", help="Reiniciar portafolio con $100.000 USD de capital simulado")
     parser.add_argument("--initial-cash", type=float, default=100000.0, help="Monto para reiniciar el portafolio (usar con --reset)")
     parser.add_argument("--backup", action="store_true", help="Crear respaldo JSON portable del portafolio en exports/backups/")
     parser.add_argument("--restore", type=str, default=None, help="Restaurar portafolio desde archivo JSON de respaldo")
     parser.add_argument("--export-csv", action="store_true", help="Exportar todas las transacciones auditadas a formato CSV")
+
 
 
     args = parser.parse_args()
@@ -114,7 +118,22 @@ def run():
             console.print(f"[bold red]Error en retiro: {e}[/bold red]\n")
             return
 
-    # 3. Dividendos
+    if args.simulate_monthly is not None:
+        try:
+            created = manager.simulate_monthly_deposits(
+                monthly_amount=args.simulate_monthly,
+                months=args.months,
+                notes=args.notes or "Aporte mensual DCA",
+            )
+            console.print(
+                f"[bold green]Simulacion completada: {len(created)} aportes mensuales de ${args.simulate_monthly:,.2f} USD "
+                f"registrados a lo largo de {args.months} meses.[/bold green]\n"
+            )
+        except Exception as e:
+            console.print(f"[bold red]Error en simulacion de aportes: {e}[/bold red]\n")
+            return
+
+    # 4. Dividendos
     if args.dividend is not None:
         if not args.ticker:
             console.print("[bold red]Debes especificar --ticker para asociar el dividendo (ej. --dividend 150 --ticker O).[/bold red]")
@@ -126,7 +145,7 @@ def run():
             console.print(f"[bold red]Error en registro de dividendo: {e}[/bold red]\n")
             return
 
-    # 4. Compras
+    # 5. Compras
     if args.buy is not None:
         if args.shares is None or args.shares <= 0:
             console.print("[bold red]Debes especificar la cantidad de acciones con --shares (ej. --buy DVA --shares 25).[/bold red]")
@@ -148,7 +167,7 @@ def run():
             console.print(f"[bold red]Error en compra: {e}[/bold red]\n")
             return
 
-    # 5. Ventas
+    # 6. Ventas
     if args.sell is not None:
         if args.shares is None or args.shares <= 0:
             console.print("[bold red]Debes especificar la cantidad de acciones con --shares (ej. --sell AAPL --shares 10).[/bold red]")
@@ -170,10 +189,10 @@ def run():
             console.print(f"[bold red]Error en venta: {e}[/bold red]\n")
             return
 
-    # 6. Graficos
+    # 7. Graficos
     if args.plot:
-        with console.status("[yellow]Generando dashboard interactivo Plotly...[/yellow]"):
-            path = create_portfolio_dashboard(manager, auto_open=True)
+        with console.status("[yellow]Generando dashboard interactivo Plotly con benchmark...[/yellow]"):
+            path = create_portfolio_dashboard(manager, auto_open=True, benchmark_ticker=args.benchmark)
         console.print(f"[bold green]Dashboard de portafolio abierto en tu navegador.[/bold green]\n[dim]Archivo: {path}[/dim]\n")
 
     # Renderizar siempre el dashboard del portafolio en consola

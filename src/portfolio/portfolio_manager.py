@@ -2,7 +2,7 @@ import os
 import json
 import uuid
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 import yfinance as yf
 
@@ -209,6 +209,48 @@ class PortfolioManager:
         txs.append(tx)
         self._save_transactions(txs)
         return tx
+
+    def simulate_monthly_deposits(
+        self,
+        monthly_amount: float = 500.0,
+        months: int = 6,
+        notes: str = "Aporte mensual DCA",
+    ) -> List[Dict[str, Any]]:
+        """
+        Simula una serie de aportes mensuales recurrentes distribuidos en el tiempo hacia el pasado.
+        Permite evaluar el efecto de Dollar Cost Averaging (DCA) y separar aportes de rentabilidad.
+        """
+        if monthly_amount <= 0:
+            raise ValueError("El monto mensual debe ser mayor a 0.")
+        if months <= 0:
+            raise ValueError("La cantidad de meses debe ser al menos 1.")
+
+        now = datetime.now()
+        created_txs = []
+        txs = self._load_transactions()
+
+        for i in range(months):
+            days_ago = int(30.4375 * (months - 1 - i))
+            tx_time = now - timedelta(days=days_ago)
+            tx = {
+                "id": str(uuid.uuid4()),
+                "timestamp": tx_time.isoformat(),
+                "type": "DEPOSIT",
+                "ticker": "CASH",
+                "shares": 1.0,
+                "price": float(monthly_amount),
+                "fee": 0.0,
+                "total": float(monthly_amount),
+                "notes": f"{notes} ({i + 1}/{months})",
+            }
+            txs.append(tx)
+            created_txs.append(tx)
+
+        # Reordenar cronologicamente
+        txs.sort(key=lambda x: x.get("timestamp", ""))
+        self._save_transactions(txs)
+        return created_txs
+
 
     def withdraw(self, amount: float, notes: str = "Retiro de capital") -> Dict[str, Any]:
         """Retira efectivo del portafolio si hay liquidez suficiente."""

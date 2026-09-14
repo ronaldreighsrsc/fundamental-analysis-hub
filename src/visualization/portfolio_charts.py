@@ -65,11 +65,19 @@ def render_terminal_portfolio(manager: PortfolioManager):
     total_return_str = _format_pct(summary["total_return_pct"])
     deposits_str = _format_currency(summary["net_deposits"])
 
-    header_text = f"""[bold yellow]VALOR TOTAL DEL PORTAFOLIO (NAV):[/bold yellow] [bold white]{total_nav_str}[/bold white]   |   [bold yellow]RENTABILIDAD TOTAL:[/bold yellow] {total_return_str}
+    # Metricas de Benchmark y Alpha (S&P 500 / SPY)
+    bench_data = analytics.get_benchmark_comparison(benchmark_ticker="SPY")
+    bench_metrics = bench_data.get("metrics", {})
+    bench_ret_str = _format_pct(bench_metrics.get("benchmark_return_pct", 0.0))
+    alpha_str = _format_pct(bench_metrics.get("alpha_pct", 0.0))
+    bench_val_str = _format_currency(bench_metrics.get("current_benchmark_val", 0.0))
+
+    header_text = f"""[bold yellow]VALOR TOTAL DEL PORTAFOLIO (NAV):[/bold yellow] [bold white]{total_nav_str}[/bold white]   |   [bold yellow]RENTABILIDAD CARTERA:[/bold yellow] {total_return_str}
+  [bold yellow]BENCHMARK S&P 500 (SPY):[/bold yellow]          [bold white]{bench_val_str}[/bold white] ({bench_ret_str})   |   [bold yellow]ALPHA GENERADO:[/bold yellow]       {alpha_str}
 
   * [cyan]Efectivo Disponible:[/cyan] [bold white]{cash_str}[/bold white]     * [cyan]Capital Invertido:[/cyan] [bold white]{invested_str}[/bold white]
   * [cyan]P&L No Realizado:[/cyan]   {unrealized_pnl_str}        * [cyan]P&L Realizado Cerrado:[/cyan] [bold white]{realized_pnl_str}[/bold white]
-  * [cyan]Depositos Netos:[/cyan]    [bold white]{deposits_str}[/bold white]        * [cyan]Posiciones Abiertas:[/cyan] [bold white]{summary['positions_count']}[/bold white]
+  * [cyan]Aportaciones Netas:[/cyan] [bold white]{deposits_str}[/bold white]        * [cyan]Posiciones Abiertas:[/cyan] [bold white]{summary['positions_count']}[/bold white]
 """
     console.print(
         Panel(header_text, title="[bold green]SIMULADOR DE INVERSIONES & PORTAFOLIO[/bold green]", border_style="green")
@@ -177,12 +185,15 @@ def create_portfolio_dashboard(
     manager: PortfolioManager,
     output_path: Optional[str] = None,
     auto_open: bool = True,
+    benchmark_ticker: str = "SPY",
 ) -> str:
     """
     Genera un dashboard interactivo Plotly exportado a HTML con:
-    - Donut chart de Asignacion por Clase de Activo.
-    - Donut chart de Distribucion por Sector.
-    - Bar chart de Posiciones ponderadas por Peso y coloreadas por P&L %.
+    - 1. Grafico de Evolucion Temporal: NAV vs Aportaciones Acumuladas vs S&P 500 (SPY).
+    - 2. Donut chart de Asignacion por Clase de Activo.
+    - 3. Donut chart de Distribucion por Sector.
+    - 4. Bar chart de Posiciones coloreadas por P&L %.
+    - 5. Bar chart de Ponderacion en Cartera (%).
     """
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
@@ -194,24 +205,88 @@ def create_portfolio_dashboard(
     allocation = analytics.get_asset_allocation()
     sectors = analytics.get_sector_distribution()
 
+    # Obtener comparativa de evolucion y benchmark
+    bench_data = analytics.get_benchmark_comparison(benchmark_ticker=benchmark_ticker)
+    tl = bench_data.get("timeline", {})
+    t_dates = tl.get("dates", [])
+    nav_series = tl.get("portfolio_nav", [])
+    deposits_series = tl.get("cumulative_deposits", [])
+    bench_series = tl.get("benchmark_nav", [])
+    bench_metrics = bench_data.get("metrics", {})
+    alpha_val = bench_metrics.get("alpha_pct", 0.0)
+
+    alpha_str = f"+{alpha_val:.2f}%" if alpha_val >= 0 else f"{alpha_val:.2f}%"
+
     fig = make_subplots(
-        rows=2,
+        rows=3,
         cols=2,
         subplot_titles=(
-            "<b>1. Asignacion por Clase de Activo</b>",
-            "<b>2. Distribucion Sectorial del Capital</b>",
-            "<b>3. P&L No Realizado por Posicion (%)</b>",
-            "<b>4. Ponderacion en Cartera (%)</b>",
+            f"<b>1. Evolucion Temporal: NAV vs Aportes Acumulados vs Benchmark {benchmark_ticker} (Alpha: {alpha_str})</b>",
+            None,
+            "<b>2. Asignacion por Clase de Activo</b>",
+            "<b>3. Distribucion Sectorial del Capital</b>",
+            "<b>4. P&L No Realizado por Posicion (%)</b>",
+            "<b>5. Ponderacion en Cartera (%)</b>",
         ),
         specs=[
+            [{"type": "xy", "colspan": 2}, None],
             [{"type": "domain"}, {"type": "domain"}],
             [{"type": "xy"}, {"type": "xy"}],
         ],
-        vertical_spacing=0.15,
+        vertical_spacing=0.10,
         horizontal_spacing=0.10,
     )
 
-    # 1. Donut Clase de Activo
+    # 1. Grafico de Lineas de Evolucion Temporal y Benchmark
+    if t_dates:
+        # Aportes acumulados (Capital puesto por el inversor)
+        fig.add_trace(
+            go.Scatter(
+                x=t_dates,
+                y=deposits_series,
+                mode="lines+markers",
+                name="Aportes Acumulados ($)",
+                line=dict(color="#94a3b8", width=2, dash="dot"),
+                marker=dict(size=4),
+                hovertemplate="<b>Aportaciones Acumuladas:</b> $%{y:,.2f}<extra></extra>",
+            ),
+            row=1,
+            col=1,
+        )
+
+        # Benchmark S&P 500 (SPY PME)
+        fig.add_trace(
+            go.Scatter(
+                x=t_dates,
+                y=bench_series,
+                mode="lines+markers",
+                name=f"Benchmark S&P 500 ({benchmark_ticker})",
+                line=dict(color="#f59e0b", width=2.5),
+                marker=dict(size=4),
+                hovertemplate=f"<b>Benchmark {benchmark_ticker}:</b> $%{{y:,.2f}}<extra></extra>",
+            ),
+            row=1,
+            col=1,
+        )
+
+        # Valor Total del Portafolio (NAV)
+        fig.add_trace(
+            go.Scatter(
+                x=t_dates,
+                y=nav_series,
+                mode="lines+markers",
+                name="Valor Portafolio (NAV)",
+                line=dict(color="#06b6d4", width=3),
+                marker=dict(size=5),
+                fill="tonexty",
+                fillcolor="rgba(6, 182, 212, 0.08)",
+                hovertemplate="<b>Valor Cartera (NAV):</b> $%{y:,.2f}<extra></extra>",
+            ),
+            row=1,
+            col=1,
+        )
+
+    # 2. Donut Clase de Activo
     alloc_labels = [item["label"] for item in allocation.values() if item["market_value"] > 0]
     alloc_values = [item["market_value"] for item in allocation.values() if item["market_value"] > 0]
     if alloc_values:
@@ -223,11 +298,11 @@ def create_portfolio_dashboard(
                 textinfo="label+percent",
                 marker=dict(colors=["#3b82f6", "#10b981", "#f59e0b", "#ec4899", "#64748b"]),
             ),
-            row=1,
+            row=2,
             col=1,
         )
 
-    # 2. Donut Sectores
+    # 3. Donut Sectores
     sec_labels = list(sectors.keys())
     sec_values = [s["market_value"] for s in sectors.values()]
     if sec_values:
@@ -238,11 +313,11 @@ def create_portfolio_dashboard(
                 hole=0.45,
                 textinfo="label+percent",
             ),
-            row=1,
+            row=2,
             col=2,
         )
 
-    # 3. Bar Chart P&L % por Posicion
+    # 4. Bar Chart P&L % por Posicion
     if positions:
         pos_tickers = list(positions.keys())
         pnl_pcts = [p["unrealized_pnl_pct"] for p in positions.values()]
@@ -256,11 +331,11 @@ def create_portfolio_dashboard(
                 hovertemplate="<b>%{x}</b>: %{y:.2f}%<extra></extra>",
                 name="P&L (%)",
             ),
-            row=2,
+            row=3,
             col=1,
         )
 
-        # 4. Bar Chart Pesos en Cartera
+        # 5. Bar Chart Pesos en Cartera
         weights = [p.get("weight_pct", 0.0) for p in positions.values()]
         fig.add_trace(
             go.Bar(
@@ -270,18 +345,19 @@ def create_portfolio_dashboard(
                 hovertemplate="<b>%{x}</b>: %{y:.1f}% del portafolio<extra></extra>",
                 name="Peso (%)",
             ),
-            row=2,
+            row=3,
             col=2,
         )
 
     # Estilos dark de alta gama
     total_nav_fmt = _format_currency(summary["portfolio_value"])
     total_ret_fmt = _format_pct(summary["total_return_pct"])
+    bench_ret_fmt = _format_pct(bench_metrics.get("benchmark_return_pct", 0.0))
 
     fig.update_layout(
         title=dict(
-            text=f"<b>Dashboard de Portafolio & Paper Trading</b> — NAV: {total_nav_fmt} ({total_ret_fmt})",
-            font=dict(size=20, color="#f8fafc"),
+            text=f"<b>Dashboard de Portafolio & Paper Trading</b> — NAV: {total_nav_fmt} ({total_ret_fmt}) | S&P 500: {bench_ret_fmt} | Alpha: {alpha_str}",
+            font=dict(size=19, color="#f8fafc"),
             x=0.03,
             y=0.98,
         ),
@@ -289,9 +365,17 @@ def create_portfolio_dashboard(
         paper_bgcolor="#0f172a",
         plot_bgcolor="#1e293b",
         font=dict(family="Segoe UI, Inter, sans-serif", color="#cbd5e1"),
-        height=850,
+        height=1150,
         margin=dict(l=50, r=50, t=110, b=50),
-        showlegend=False,
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.01,
+            xanchor="right",
+            x=0.98,
+            font=dict(size=11),
+        ),
     )
 
     if output_path is None:
@@ -312,3 +396,4 @@ def create_portfolio_dashboard(
             pass
 
     return output_path
+

@@ -140,8 +140,9 @@ Motor de libro mayor contable (event-sourcing ledger) para auditar y simular inv
 # Ver resumen del portafolio (NAV total, caja disponible, posiciones abiertas, coste base WAC y P&L no realizado)
 python src/main_portfolio.py
 
-# Abrir dashboard visual interactivo en el navegador con graficos Plotly (asignacion, sectores y P&L)
+# Abrir dashboard visual interactivo con comparativa contra S&P 500 (SPY) y desacople de aportes
 python src/main_portfolio.py --plot
+python src/main_portfolio.py --plot --benchmark SPY
 
 # Simular compra de acciones (ej: 50 acciones de DaVita a $148.50)
 python src/main_portfolio.py --buy --ticker DVA --shares 50 --price 148.50 --fee 1.50 --notes "Tesis Moat Duopolio"
@@ -149,9 +150,12 @@ python src/main_portfolio.py --buy --ticker DVA --shares 50 --price 148.50 --fee
 # Simular venta con calculo automatico de P&L realizado (ej: vender 20 acciones de DVA a $165.00)
 python src/main_portfolio.py --sell --ticker DVA --shares 20 --price 165.00 --fee 1.50 --notes "Toma parcial de beneficios"
 
-# Registrar cobro de dividendos o depositos/retiros de capital
+# Registrar aportes mensuales en tiempo real o simular serie historica DCA
+python src/main_portfolio.py --deposit 500.00 --notes "Aporte mensual septiembre"
+python src/main_portfolio.py --simulate-monthly 500 --months 6 --notes "Aporte sistematico DCA"
+
+# Registrar cobro de dividendos o retiros de capital
 python src/main_portfolio.py --dividend --ticker AAPL --price 45.00 --notes "Dividendo Q3"
-python src/main_portfolio.py --deposit --price 10000.00 --notes "Aporte mensual"
 
 # Ver historial completo de transacciones auditadas
 python src/main_portfolio.py --history
@@ -182,7 +186,7 @@ Tipos soportados en la watchlist:
 | `bond_etf` | ETFs de renta fija | TLT, IEF, SHY |
 
 ### 6. Ejecutar pruebas unitarias (Pytest)
-El proyecto cuenta con 29 tests unitarios automatizados que cubren el ledger contable, el analizador de estados financieros, los extractores SEC y los gestores de moat:
+El proyecto cuenta con 33 tests unitarios automatizados que cubren el ledger contable, el analizador de estados financieros, los extractores SEC, benchmarks PME y los gestores de moat:
 ```powershell
 pytest -v
 ```
@@ -190,4 +194,5 @@ pytest -v
 ## 📝 License
 
 MIT License
+
 
