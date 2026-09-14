@@ -383,6 +383,8 @@ def run_analysis():
     parser = argparse.ArgumentParser(description="Fundamental Analysis Hub CLI")
     parser.add_argument("--ticker", type=str, default=None, help="Filtrar analisis por un ticker especifico")
     parser.add_argument("--moat", action="store_true", help="Mostrar analisis cualitativo detallado de Moat y Tesis")
+    parser.add_argument("--history", action="store_true", help="Muestra la tabla de estados financieros multianuales (10-K SEC)")
+    parser.add_argument("--plot", action="store_true", help="Genera y abre el grafico interactivo Plotly en el navegador")
     args = parser.parse_args()
 
     console.print(Panel.fit(
@@ -442,6 +444,26 @@ def run_analysis():
                 metrics = analyzer.get_key_metrics()
                 if metrics.get("moat", {}).get("has_thesis"):
                     show_moat_detail(analyzer)
+
+        # Si se activo --history o --plot, procesar estados financieros multianuales de la SEC
+        if (args.history or args.plot) and groups.get("equity"):
+            from src.data.sec_financial_extractor import SecFinancialExtractor
+            from src.visualization.financial_charts import (
+                render_terminal_financial_table,
+                create_financial_history_chart,
+            )
+            extractor = SecFinancialExtractor()
+            for ticker, analyzer in groups["equity"]:
+                try:
+                    df_hist = extractor.get_financial_history(ticker)
+                    comp_name = extractor.get_company_name(ticker)
+                    if args.history and not df_hist.empty:
+                        render_terminal_financial_table(ticker, df_hist, comp_name)
+                    if args.plot and not df_hist.empty:
+                        chart_p = create_financial_history_chart(ticker, df_hist, comp_name, auto_open=True)
+                        console.print(f"[bold green]Grafico interactivo de {ticker} generado en: {chart_p}[/bold green]\n")
+                except Exception as ex:
+                    console.print(f"[yellow]No se pudo cargar historico SEC para {ticker}: {ex}[/yellow]")
 
     if groups.get("reit"):
         show_reit_table(groups["reit"])

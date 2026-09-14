@@ -40,3 +40,8 @@ Thumbs.db
 # Logs
 *.log
 logs/
+
+# Generated Exports
+exports/charts/*.html
+!exports/.gitkeep
+
