@@ -1,0 +1,35 @@
+[
+  {
+    "id": "05ad0ee5-3f89-4489-8577-635691bb5ebd",
+    "timestamp": "2026-09-14T13:38:27.142435",
+    "type": "DEPOSIT",
+    "ticker": "CASH",
+    "shares": 1.0,
+    "price": 100000.0,
+    "fee": 0.0,
+    "total": 100000.0,
+    "notes": "Reinicio de portafolio con $100,000.00 USD"
+  },
+  {
+    "id": "c25c83ba-018f-404d-a441-08db921393f9",
+    "timestamp": "2026-09-14T13:39:27.618964",
+    "type": "BUY",
+    "ticker": "DVA",
+    "shares": 50.0,
+    "price": 187.95,
+    "fee": 0.0,
+    "total": 9397.5,
+    "notes": "Tesis duopolio dialisis"
+  },
+  {
+    "id": "7b1cf2cd-14ab-4ca8-a1ee-f2b4fba4194f",
+    "timestamp": "2026-09-14T13:42:36.363236",
+    "type": "BUY",
+    "ticker": "AAPL",
+    "shares": 30.0,
+    "price": 332.635,
+    "fee": 0.0,
+    "total": 9979.05,
+    "notes": "Lider tecnologico ecosistema cerrado"
+  }
+]
