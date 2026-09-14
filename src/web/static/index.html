@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fundamental Analysis Hub — Broker & Trading Terminal</title>
+  <meta name="description" content="Simulador institucional de inversiones, broker interactivo y auditor contable de cartera con comparativa contra S&P 500.">
+  
+  <!-- Google Fonts: Outfit (Display/Metrics) & Inter (Data/UI) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Plotly.js CDN -->
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="top-nav">
+    <div class="brand-section">
+      <div class="brand-icon">FA</div>
+      <div>
+        <h1 class="brand-title">FUNDAMENTAL ANALYSIS HUB</h1>
+        <div class="brand-subtitle">Institutional Broker & Trading Terminal</div>
+      </div>
+    </div>
+
+    <div class="nav-stats-bar">
+      <div class="stat-pill">
+        <span class="stat-pill-label">Valor Total (NAV)</span>
+        <span class="stat-pill-val" id="nav-portfolio-val">$0.00</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-pill-label">Efectivo / Liquidez</span>
+        <span class="stat-pill-val" id="nav-cash-val" style="color: var(--accent-cyan);">$0.00</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-pill-label">Retorno Cartera</span>
+        <span id="nav-return-badge" class="badge-green">0.00%</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-pill-label">S&P 500 (SPY)</span>
+        <span id="nav-spy-badge" class="badge-cyan">0.00%</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-pill-label">Alpha Generado</span>
+        <span id="nav-alpha-badge" class="badge-green">+0.00%</span>
+      </div>
+    </div>
+
+    <div class="nav-actions">
+      <button id="btn-export-csv" class="btn-secondary" title="Exportar historial a Excel / CSV">
+        <span>📥</span> Exportar CSV
+      </button>
+      <button id="btn-reset-portfolio" class="btn-danger-outline" title="Reiniciar cuenta a $100k">
+        <span>🔄</span> Reiniciar ($100k)
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Application Wrapper -->
+  <main class="main-wrapper">
+
+    <!-- Top KPI Cards -->
+    <section class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-card-header">
+          <span class="metric-title">Valor Total (NAV)</span>
+          <span class="metric-icon">💼</span>
+        </div>
+        <div class="metric-value" id="kpi-nav">$100,000.00</div>
+        <div class="metric-sub" id="kpi-nav-sub">Rentabilidad: +0.00%</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-card-header">
+          <span class="metric-title">Aportes Acumulados</span>
+          <span class="metric-icon">🏦</span>
+        </div>
+        <div class="metric-value" id="kpi-deposits">$100,000.00</div>
+        <div class="metric-sub">Capital propio depositado</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-card-header">
+          <span class="metric-title">Efectivo Disponible</span>
+          <span class="metric-icon">💵</span>
+        </div>
+        <div class="metric-value" id="kpi-cash" style="color: var(--accent-cyan);">$100,000.00</div>
+        <div class="metric-sub" id="kpi-cash-pct">100.0% en liquidez</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-card-header">
+          <span class="metric-title">P&L No Realizado</span>
+          <span class="metric-icon">📈</span>
+        </div>
+        <div class="metric-value" id="kpi-unrealized-pnl">$0.00</div>
+        <div class="metric-sub" id="kpi-unrealized-pct">+0.00% sobre invertido</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-card-header">
+          <span class="metric-title">Benchmark S&P 500</span>
+          <span class="metric-icon">🎯</span>
+        </div>
+        <div class="metric-value" id="kpi-benchmark-val">$100,000.00</div>
+        <div class="metric-sub" id="kpi-alpha-text">Alpha: +0.00% vs mercado</div>
+      </div>
+    </section>
+
+    <!-- Main Workspace (2 Columns) -->
+    <div class="workspace-grid">
+
+      <!-- LEFT COLUMN: Charts and Holdings -->
+      <div style="display: flex; flex-direction: column; gap: 24px;">
+
+        <!-- Evolution & Benchmark Chart -->
+        <section class="card-section">
+          <div class="section-header">
+            <h2 class="section-title">
+              <span>📊</span> Evolución Temporal: Valor Cartera vs Aportes vs S&P 500
+            </h2>
+            <div style="font-size: 12px; color: var(--text-dim);" id="timeline-range-label">
+              Metodología Institucional PME
+            </div>
+          </div>
+          <div id="chart-evolution" class="chart-container"></div>
+        </section>
+
+        <!-- Open Positions Table -->
+        <section class="card-section">
+          <div class="section-header">
+            <h2 class="section-title">
+              <span>📋</span> Posiciones Abiertas en Cartera
+            </h2>
+            <div style="font-size: 12px; color: var(--text-muted);" id="positions-count-label">
+              0 activos
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table" id="table-positions">
+              <thead>
+                <tr>
+                  <th>Activo</th>
+                  <th>Tipo</th>
+                  <th style="text-align: right;">Acciones</th>
+                  <th style="text-align: right;">Costo WAC</th>
+                  <th style="text-align: right;">Precio Mercado</th>
+                  <th style="text-align: right;">Valor Actual</th>
+                  <th style="text-align: right;">P&L ($)</th>
+                  <th style="text-align: right;">Retorno %</th>
+                  <th style="text-align: right;">Peso %</th>
+                  <th style="text-align: center;">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-positions">
+                <tr>
+                  <td colspan="10" style="text-align: center; color: var(--text-dim); padding: 24px;">
+                    Cargando posiciones de la cartera...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- RIGHT COLUMN: Trading Desk / Order Ticket -->
+      <aside class="trading-panel">
+        <div class="trading-header">
+          <h2 class="trading-title">
+            <span>⚡</span> Order Ticket / Terminal
+          </h2>
+          <span style="font-size: 11px; color: var(--accent-emerald);" id="order-status-indicator">
+            ● Mercado Abierto
+          </span>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="trading-tabs">
+          <button class="tab-btn active" data-tab="tab-buy" id="tab-btn-buy">Comprar</button>
+          <button class="tab-btn" data-tab="tab-sell" id="tab-btn-sell">Vender</button>
+          <button class="tab-btn" data-tab="tab-dca" id="tab-btn-dca">Aporte DCA</button>
+        </div>
+
+        <!-- TAB 1: COMPRAR -->
+        <form id="form-buy" class="trading-form-body">
+          <div class="form-group">
+            <label class="form-label" for="buy-ticker">
+              <span>Símbolo / Ticker</span>
+              <span id="buy-quote-loading" style="display: none; color: var(--accent-cyan);">Consultando...</span>
+            </label>
+            <input type="text" id="buy-ticker" class="form-control" placeholder="Ej: DVA, AAPL, MSFT, KO..." autocomplete="off" required>
+            <div class="quick-tickers-list" id="quick-tickers">
+              <!-- Chips inserted dynamically -->
+            </div>
+          </div>
+
+          <!-- Quote Preview -->
+          <div class="quote-preview-box" id="buy-quote-box" style="display: none;">
+            <div>
+              <div class="quote-preview-name" id="buy-quote-name">Company Name</div>
+              <div style="font-size: 10.5px; color: var(--text-dim);" id="buy-quote-meta">Equity • Technology</div>
+            </div>
+            <div class="quote-preview-price" id="buy-quote-price">$0.00</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="buy-shares">
+              <span>Cantidad de Acciones</span>
+              <span style="color: var(--text-dim);" id="buy-available-cash-hint">Caja: $0.00</span>
+            </label>
+            <input type="number" id="buy-shares" class="form-control" placeholder="Ej: 10" step="any" min="0.0001" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="buy-price">
+              <span>Precio de Ejecución ($ USD)</span>
+              <span style="color: var(--text-dim);">Vacío = Precio en vivo</span>
+            </label>
+            <input type="number" id="buy-price" class="form-control" placeholder="Automático" step="any">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="buy-notes">
+              <span>Tesis de Inversión / Notas</span>
+            </label>
+            <input type="text" id="buy-notes" class="form-control" placeholder="Ej: Tesis de foso económico / Moat duopolio...">
+          </div>
+
+          <!-- Order Summary Calculation -->
+          <div class="order-calc-box">
+            <div class="calc-row">
+              <span>Subtotal estimado:</span>
+              <span id="buy-calc-subtotal">$0.00</span>
+            </div>
+            <div class="calc-row">
+              <span>Comisión estimada:</span>
+              <span>$0.00</span>
+            </div>
+            <div class="calc-row total">
+              <span>Total Estimado:</span>
+              <span id="buy-calc-total" style="color: var(--accent-cyan);">$0.00</span>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-cta-buy" id="btn-submit-buy">
+            Ejecutar Orden de Compra
+          </button>
+        </form>
+
+        <!-- TAB 2: VENDER -->
+        <form id="form-sell" class="trading-form-body" style="display: none;">
+          <div class="form-group">
+            <label class="form-label" for="sell-ticker-select">Seleccionar Posición</label>
+            <select id="sell-ticker-select" class="form-control" required>
+              <option value="">Selecciona un activo...</option>
+            </select>
+          </div>
+
+          <div class="quote-preview-box" id="sell-quote-box" style="display: none;">
+            <div>
+              <div class="quote-preview-name" id="sell-quote-name">Ticker</div>
+              <div style="font-size: 10.5px; color: var(--text-dim);" id="sell-quote-shares">Posees: 0 acciones</div>
+            </div>
+            <div class="quote-preview-price" id="sell-quote-price">$0.00</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="sell-shares">Acciones a Vender</label>
+            <input type="number" id="sell-shares" class="form-control" placeholder="Cantidad" step="any" min="0.0001" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="sell-notes">Notas / Motivo de Venta</label>
+            <input type="text" id="sell-notes" class="form-control" placeholder="Ej: Toma de beneficios, rebalanceo...">
+          </div>
+
+          <div class="order-calc-box">
+            <div class="calc-row">
+              <span>P&L Realizado Estimado:</span>
+              <span id="sell-calc-pnl">$0.00</span>
+            </div>
+            <div class="calc-row total">
+              <span>Total a Acreditar en Caja:</span>
+              <span id="sell-calc-total" style="color: var(--accent-emerald);">$0.00</span>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-cta-sell" id="btn-submit-sell">
+            Ejecutar Orden de Venta
+          </button>
+        </form>
+
+        <!-- TAB 3: APORTE MENSUAL (DCA) -->
+        <form id="form-dca" class="trading-form-body" style="display: none;">
+          <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
+            Inyecta aportes de capital periódicos para evaluar tu estrategia de Dollar Cost Averaging (DCA) desacoplada del retorno de mercado.
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="dca-amount">Monto del Aporte ($ USD)</label>
+            <input type="number" id="dca-amount" class="form-control" value="500.00" step="50" min="10" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="dca-mode">Tipo de Aporte</label>
+            <select id="dca-mode" class="form-control">
+              <option value="single">Aporte Único en Tiempo Real</option>
+              <option value="multi-6">Simular Histórico: 6 Meses ($500/mes = $3.000)</option>
+              <option value="multi-12">Simular Histórico: 12 Meses ($500/mes = $6.000)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="dca-notes">Nota de Transacción</label>
+            <input type="text" id="dca-notes" class="form-control" value="Aporte mensual sistemático DCA">
+          </div>
+
+          <button type="submit" class="btn-cta-deposit" id="btn-submit-dca">
+            Inyectar Capital DCA
+          </button>
+        </form>
+      </aside>
+
+    </div>
+
+    <!-- Dual Charts: Allocation and Sector Breakdown -->
+    <div class="charts-row-dual">
+      <section class="card-section">
+        <div class="section-header">
+          <h2 class="section-title"><span>🥧</span> Asignación por Clase de Activo</h2>
+        </div>
+        <div id="chart-allocation" class="chart-container"></div>
+      </section>
+
+      <section class="card-section">
+        <div class="section-header">
+          <h2 class="section-title"><span>🏢</span> Diversificación Sectorial & HHI</h2>
+          <div id="hhi-badge" class="badge-cyan">HHI: 0</div>
+        </div>
+        <div id="chart-sectors" class="chart-container"></div>
+      </section>
+    </div>
+
+    <!-- Transaction History Audit Ledger -->
+    <section class="card-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span>📜</span> Libro Mayor de Transacciones Auditadas (Event-Sourcing Ledger)
+        </h2>
+        <div style="font-size: 12px; color: var(--text-dim);" id="tx-count-label">
+          0 transacciones
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="data-table" id="table-history">
+          <thead>
+            <tr>
+              <th>Fecha / Hora</th>
+              <th>Tipo</th>
+              <th>Ticker</th>
+              <th style="text-align: right;">Acciones</th>
+              <th style="text-align: right;">Precio</th>
+              <th style="text-align: right;">Comisión</th>
+              <th style="text-align: right;">Impacto en Caja</th>
+              <th>Notas / Tesis de Inversión</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-history">
+            <tr>
+              <td colspan="8" style="text-align: center; color: var(--text-dim); padding: 24px;">
+                Cargando libro contable...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <!-- Client Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>

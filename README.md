@@ -13,20 +13,21 @@ Plataforma de analisis fundamental para value investing, con descarga automatiza
 - **Historico Financiero Multianual (10-K y 10-Q SEC)** — Extraccion oficial y 100% gratuita de 10 a 17+ anios de estados financieros auditados directamente desde la SEC EDGAR API publica (ventas, beneficio neto, FCF, margenes historicos y recompras de acciones), sin pagar suscripciones a plataformas privadas.
 - **Dashboards Graficos Interactivos (Plotly)** — Generacion automatica de graficos en HTML en modo oscuro profesional con subplots de ingresos vs beneficios, calidad de caja (FCF vs Net Income), evolucion del foso a traves de margenes y dilucion de acciones.
 - **Simulador de Portafolio y Paper Trading Profesional** — Motor contable de libro mayor (event-sourcing ledger) para auditar y simular inversiones con capital inicial ($100.000 USD por defecto, simulando brokers como Fintual, Interactive Brokers o Schwab). Seguimiento estricto de transacciones, coste medio ponderado (WAC), P&L realizado vs no realizado, comisiones y dividendos.
+- **Web App: Broker & Trading Terminal Interactivo** — Aplicación web moderna en modo oscuro con cotizaciones en tiempo real, ticket de órdenes para comprar y vender con 1 clic, simulación de aportes mensuales DCA y gráficos interactivos de evolución contra el S&P 500.
 - **Analisis y Concentracion de Cartera** — Evaluacion automatica de asignacion de capital (% acciones, % REITs, % ETFs, % efectivo), exposicion sectorial y calculo del Indice Herfindahl-Hirschman (HHI) para medir concentracion del riesgo.
 - **Dashboards Visuales de Portafolio (Plotly + Rich)** — Monitor integral en terminal con tablas formateadas y generacion de dashboards interactivos HTML con donas de asset allocation, distribucion sectorial y barras de rendimiento por activo.
-- **Suite de Pruebas Automatizadas (Pytest)** — 29 tests unitarios que garantizan la integridad de la logica contable del portafolio, clasificadores de activos, analisis de estados financieros y extraccion de la SEC.
+- **Suite de Pruebas Automatizadas (Pytest)** — 39 tests unitarios que garantizan la integridad de la logica contable del portafolio, clasificadores de activos, analisis de estados financieros, extraccion de la SEC y endpoints de la API web.
 - **Intrinsic Value Calculator** (Planned) — DCF, Graham Formula, y multiplos comparables.
 - **Margin of Safety** (Planned) — Comparacion visual de precio de mercado vs. valor intrinseco.
 
 ## 🛠️ Tech Stack
 
-- **Language**: Python 3.12+
+- **Language**: Python 3.12+, HTML5, Vanilla CSS, Vanilla JavaScript (SPA)
 - **Data Sources**: yfinance, SEC EDGAR API (public 10-K & 10-Q filings)
 - **Analysis**: pandas, numpy
 - **Visualization**: rich (terminal), plotly (interactive dark mode web charts)
 - **Testing**: pytest
-- **Architecture**: OOP con principios SOLID, Factory Pattern, Event Sourcing Ledger
+- **Architecture**: OOP con principios SOLID, Factory Pattern, Event Sourcing Ledger, RESTful API
 
 ## 📁 Project Structure
 
@@ -48,10 +49,14 @@ fundamental-analysis-hub/
 │   ├── portfolio/                    # Motor contable y simulador de portafolio
 │   │   ├── portfolio_manager.py      # Event-sourcing ledger (compras, ventas, WAC, P&L)
 │   │   └── portfolio_analytics.py    # Asignacion de activos, sectores e indice HHI
+│   ├── web/                          # Aplicacion Web Interactiva (Broker Terminal)
+│   │   ├── server.py                 # Servidor HTTP y API REST en Python
+│   │   └── static/                   # SPA: index.html, style.css, app.js
 │   ├── valuation/                    # (Planned) Modelos de valoracion
 │   ├── visualization/
 │   │   ├── financial_charts.py       # Renderizado en terminal y graficos Plotly (SEC)
 │   │   └── portfolio_charts.py       # Dashboards de portafolio en terminal y HTML Plotly
+│   ├── main_app.py                   # Orquestador: lanza la aplicacion web del Broker
 │   ├── main_data_update.py           # Orquestador: descarga de datos de mercado
 │   ├── main_financial_history.py     # Orquestador: historico 10-K/10-Q y graficos
 │   ├── main_analysis.py              # Orquestador: visualizacion de metricas y CLI
@@ -64,7 +69,7 @@ fundamental-analysis-hub/
 │   └── portfolio/                    # Ledger inmutable de transacciones y configuracion
 ├── exports/
 │   └── charts/                       # Graficos interactivos HTML generados con Plotly
-├── tests/                            # 29 tests unitarios automatizados con pytest
+├── tests/                            # 39 tests unitarios automatizados con pytest
 ├── notebooks/
 ├── requirements.txt
 ├── .env.example
@@ -100,6 +105,17 @@ copy .env.example .env
 ```
 
 ## 📊 Uso
+
+### 0. Aplicacion Web Interactiva: Broker & Trading Terminal (¡Recomendado!)
+La forma mas visual, interactiva y real de operar tu portafolio (estilo Fintual / Interactive Brokers), con cotizaciones en vivo, ticket de ordenes y graficos en tiempo real:
+```powershell
+python src/main_app.py
+```
+Abre automaticamente tu navegador en `http://127.0.0.1:5000` con:
+- **Ticket de Ordenes:** Compra y venta con cotizaciones en vivo al escribir el ticker.
+- **Aportes DCA:** Registro de depositos mensuales de $500 y evaluacion de impacto temporal.
+- **Graficos en Vivo:** Evolucion de Cartera vs Aportes Acumulados vs S&P 500 (SPY).
+- **Libro Mayor:** Auditoria completa de cada transaccion con tus notas de tesis de inversion.
 
 ### 1. Actualizar datos financieros
 Descarga los estados financieros y precios historicos de todos los activos en la watchlist.
