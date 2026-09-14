@@ -13,6 +13,7 @@
   {"ticker": "JPM", "name": "JPMorgan Chase & Co.", "sector": "Financials", "type": "equity"},
   {"ticker": "JNJ", "name": "Johnson & Johnson", "sector": "Healthcare", "type": "equity"},
   {"ticker": "PFE", "name": "Pfizer Inc.", "sector": "Healthcare", "type": "equity"},
+  {"ticker": "DVA", "name": "DaVita Inc.", "sector": "Healthcare", "type": "equity"},
   {"ticker": "PEP", "name": "PepsiCo Inc.", "sector": "Consumer Defensive", "type": "equity"},
   {"ticker": "KO", "name": "The Coca-Cola Company", "sector": "Consumer Defensive", "type": "equity"},
   {"ticker": "KHC", "name": "The Kraft Heinz Company", "sector": "Consumer Defensive", "type": "equity"},

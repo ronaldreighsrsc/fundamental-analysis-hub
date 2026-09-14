@@ -8,6 +8,8 @@ Plataforma de analisis fundamental para value investing, con descarga automatiza
 - **Clasificacion de Activos (OOP/SOLID)** — Cada activo se clasifica por tipo (`equity`, `reit`, `equity_etf`, `bond_etf`) y se analiza con las metricas que le corresponden.
 - **Descarga y Cache de Datos** — Datos financieros descargados de Yahoo Finance y almacenados localmente en `data/cache/` con validez temporal de 24 horas.
 - **Analisis de Metricas Clave** — Dashboard en terminal que muestra P/E, ROE, Margenes, Dividend Yield, Payout Ratio, FFO (REITs), Expense Ratio (ETFs), y mas.
+- **Analisis Cualitativo de Moat (Foso Economico)** — Evaluacion de ventajas competitivas duraderas basada en las 5 fuentes clasicas (Costes de cambio, Activos intangibles/Regulatorios, Efectos de red, Ventajas de costes y Escala eficiente), con tesis del inversor y amenazas de disrupcion.
+- **Perspectiva de Inversores (Skin in the Game & Smart Money)** — Monitoreo de alineacion accionaria (% de directivos e insiders) y participacion de fondos institucionales, manteniendo un calculo independiente del valor intrinseco (sin sesgo de analistas ni cortos).
 - **Intrinsic Value Calculator** (Planned) — DCF, Graham Formula, y multiplos comparables.
 - **Margin of Safety** (Planned) — Comparacion visual de precio de mercado vs. valor intrinseco.
 
@@ -29,7 +31,8 @@ fundamental-analysis-hub/
 │   │   └── downloader.py         # Descarga y cache de datos financieros
 │   ├── analysis/
 │   │   ├── base_analyzer.py      # Clase abstracta base (AssetAnalyzer)
-│   │   ├── equity_analyzer.py    # Analizador para acciones
+│   │   ├── equity_analyzer.py    # Analizador para acciones (rentabilidad, deuda, ownership)
+│   │   ├── moat_manager.py       # Gestor cualitativo de Moat y Tesis de Inversion
 │   │   ├── reit_analyzer.py      # Analizador para REITs (FFO/AFFO)
 │   │   ├── etf_analyzer.py       # Analizadores para ETFs (equity + bonds)
 │   │   └── analyzer_factory.py   # Factory Pattern
@@ -37,9 +40,10 @@ fundamental-analysis-hub/
 │   ├── portfolio/                # (Planned) Seguimiento de portafolio
 │   ├── visualization/            # (Planned) Graficos y dashboards
 │   ├── main_data_update.py       # Orquestador: descarga de datos
-│   └── main_analysis.py          # Orquestador: visualizacion de metricas
+│   └── main_analysis.py          # Orquestador: visualizacion de metricas y CLI
 ├── config/
-│   └── watchlist.json            # Lista manual de activos bajo seguimiento
+│   ├── watchlist.json            # Lista manual de activos bajo seguimiento
+│   └── moat_ratings.json         # Evaluaciones y tesis cualitativas de Moat
 ├── data/
 │   └── cache/                    # Datos financieros descargados (ignorado por Git)
 ├── tests/
@@ -86,20 +90,22 @@ python src/main_data_update.py           # Usa cache si tiene menos de 24h
 python src/main_data_update.py --force   # Fuerza re-descarga desde Yahoo Finance
 ```
 
-### 2. Ver metricas fundamentales
-Muestra tablas de metricas clave agrupadas por tipo de activo (Equities, REITs, ETFs).
+### 2. Ver metricas fundamentales y Moat
+Muestra tablas de metricas clave agrupadas por tipo de activo, estructura de inversores y evaluacion cualitativa de ventajas competitivas.
 ```powershell
-python src/main_analysis.py
+python src/main_analysis.py              # Resumen general de la watchlist
+python src/main_analysis.py --ticker DVA # Analisis individual con ficha completa de Moat
+python src/main_analysis.py --moat       # Resumen general + reporte cualitativo de Moat
 ```
 
-### 3. Configurar la watchlist
-Edita manualmente el archivo `config/watchlist.json` para agregar o quitar activos.
-Cada entrada requiere: `ticker`, `name`, `sector` y `type`.
+### 3. Configurar la watchlist y tesis de Moat
+- **Watchlist (`config/watchlist.json`):** Edita manualmente para agregar o quitar activos (`ticker`, `name`, `sector`, `type`).
+- **Tesis de Moat (`config/moat_ratings.json`):** Documenta para cada empresa su calificacion (`Wide`, `Narrow`, `None`), tendencia, fuentes activas de foso (costes de cambio, regulatorios, efectos de red, etc.), tesis cualitativa y riesgos de disrupcion.
 
-Tipos soportados:
+Tipos soportados en la watchlist:
 | Tipo | Descripcion | Ejemplo |
 |---|---|---|
-| `equity` | Acciones individuales | AAPL, MSFT, PFE |
+| `equity` | Acciones individuales | AAPL, MSFT, DVA, KO |
 | `reit` | REITs (evaluados con FFO/AFFO) | O |
 | `equity_etf` | ETFs de renta variable | JEPI, SCHD, VNQ |
 | `bond_etf` | ETFs de renta fija | TLT, IEF, SHY |

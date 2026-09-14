@@ -136,6 +136,39 @@ class EquityAnalyzer(AssetAnalyzer):
         }
 
     # =========================================================================
+    # Metricas de Inversores y Propiedad (Skin in the Game)
+    # =========================================================================
+
+    def _get_ownership_metrics(self) -> Dict[str, Any]:
+        """Metricas de estructura de propiedad accionaria (Insiders e Institucionales)."""
+        return {
+            "held_percent_insiders": self.info.get("heldPercentInsiders"),
+            "held_percent_institutions": self.info.get("heldPercentInstitutions"),
+        }
+
+    def get_moat_analysis(self) -> Dict[str, Any]:
+        """
+        Retorna la evaluacion cualitativa del Moat (foso economico), fuentes
+        de ventaja competitiva, tesis del inversor y amenazas de disrupcion.
+        """
+        from src.analysis.moat_manager import MoatManager
+        mgr = MoatManager()
+        moat_info = mgr.get_moat(self.ticker)
+        if not moat_info:
+            return {
+                "has_thesis": False,
+                "rating": "None",
+                "trend": "Stable",
+                "sources": [],
+                "thesis": "Pendiente de documentacion cualitativa.",
+                "threats": "Pendiente de analisis de riesgos de disrupcion.",
+            }
+        return {
+            "has_thesis": True,
+            **moat_info
+        }
+
+    # =========================================================================
     # Interfaz Publica (implementacion de AssetAnalyzer)
     # =========================================================================
 
@@ -143,7 +176,7 @@ class EquityAnalyzer(AssetAnalyzer):
         """
         Retorna todas las metricas clave del equity organizadas por categoria.
         Incluye margenes historicos (ultimos 4 anios), ROIC, ratios de valoracion,
-        endeudamiento y dividendos.
+        endeudamiento, dividendos, estructura de propiedad y evaluacion de Moat.
         """
         years = self._get_annual_years()[:4]
 
@@ -175,6 +208,8 @@ class EquityAnalyzer(AssetAnalyzer):
             "valuation": self._get_valuation_ratios(),
             "debt": self._get_debt_metrics(),
             "dividends": self._get_dividend_metrics(),
+            "ownership": self._get_ownership_metrics(),
+            "moat": self.get_moat_analysis(),
             "growth": {
                 "earnings_growth": self.info.get("earningsGrowth"),
                 "revenue_growth": self.info.get("revenueGrowth"),
@@ -196,4 +231,7 @@ class EquityAnalyzer(AssetAnalyzer):
             "roe": self.info.get("returnOnEquity"),
             "gross_margin": self.info.get("grossMargins"),
             "free_cash_flow": self.info.get("freeCashflow"),
+            "held_percent_insiders": self.info.get("heldPercentInsiders"),
+            "held_percent_institutions": self.info.get("heldPercentInstitutions"),
+            "moat_rating": self.get_moat_analysis().get("rating"),
         }

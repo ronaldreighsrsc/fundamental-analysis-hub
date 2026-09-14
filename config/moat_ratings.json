@@ -1,0 +1,72 @@
+{
+  "DVA": {
+    "name": "DaVita Inc.",
+    "rating": "Wide",
+    "trend": "Stable",
+    "sources": [
+      "intangibles_regulatory",
+      "switching_costs",
+      "efficient_scale"
+    ],
+    "thesis": "Duopolio consolidado en EE.UU. (~35-40% de cuota) junto a Fresenius. Foso protegido por un marco regulatorio único desde la Enmienda de la Seguridad Social de 1972 (Medicare cubre diálisis para insuficiencia renal terminal independientemente de la edad). Los pacientes requieren diálisis 3 veces por semana, lo que genera costes de cambio extremos por proximidad y relación con los directores médicos locales (nefrólogos). Fuertes barreras de entrada por leyes de 'Certificate of Need' y escala eficiente que desincentivan la apertura de nuevas clínicas competidoras.",
+    "threats": "Nuevas terapias médicas y fármacos (p. ej., agonistas GLP-1 que retrasen o prevengan la progresión a fallo renal crónico), presiones regulatorias en los márgenes de aseguradoras comerciales que subsidian los tratamientos, y posibles avances a largo plazo en riñones bioartificiales o trasplantes."
+  },
+  "AAPL": {
+    "name": "Apple Inc.",
+    "rating": "Wide",
+    "trend": "Stable",
+    "sources": [
+      "switching_costs",
+      "intangibles_regulatory",
+      "network_effects"
+    ],
+    "thesis": "Ecosistema vertical cerrado con costes de cambio excepcionalmente altos (iMessage, iCloud, Apple Watch, suscripciones y compatibilidad cruzada). Marca premium con un poder de fijación de precios (pricing power) sin parangón en electrónica de consumo y una base instalada activa superior a los 2.000 millones de dispositivos.",
+    "threats": "Presión antimonopolio y regulación de la App Store en la UE y EE.UU., maduración del mercado de smartphones y desaceleración en ciclos de renovación de hardware."
+  },
+  "MSFT": {
+    "name": "Microsoft Corporation",
+    "rating": "Wide",
+    "trend": "Increasing",
+    "sources": [
+      "switching_costs",
+      "network_effects",
+      "cost_advantages"
+    ],
+    "thesis": "Costes de cambio colosales en el entorno corporativo global (Windows, Microsoft 365, Active Directory, Azure). La infraestructura tecnológica corporativa está construida sobre sus protocolos. Liderazgo en IA empresarial integrada en el flujo diario de trabajo de millones de empresas.",
+    "threats": "Feroz competencia en la nube pública frente a AWS y Google Cloud, y dependencia de grandes gastos de capital (CapEx) en infraestructura de centros de datos de IA."
+  },
+  "GOOGL": {
+    "name": "Alphabet Inc.",
+    "rating": "Wide",
+    "trend": "Stable",
+    "sources": [
+      "network_effects",
+      "intangibles_regulatory",
+      "cost_advantages"
+    ],
+    "thesis": "Efectos de red masivos en búsqueda (Search), YouTube y Android. La mayor escala y volumen de datos de intención de usuario del mundo, generando un inventario publicitario sumamente rentable con ventajas de costes de distribución por acuerdos predeterminados.",
+    "threats": "Transición de la búsqueda tradicional a interfaces conversacionales y agentes de IA (ChatGPT, Perplexity), además de litigios antimonopolio sobre acuerdos de distribución con Apple y Android."
+  },
+  "KO": {
+    "name": "The Coca-Cola Company",
+    "rating": "Wide",
+    "trend": "Stable",
+    "sources": [
+      "intangibles_regulatory",
+      "cost_advantages"
+    ],
+    "thesis": "Una de las marcas comerciales más valiosas y reconocidas del planeta. Sistema global de embotellado y distribución exclusivo e inigualable que le otorga enormes economías de escala y una presencia omnipresente en puntos de venta minorista y hostelería.",
+    "threats": "Cambios en las preferencias de los consumidores hacia bebidas bajas en azúcar o alternativas funcionales, impuestos a las bebidas azucaradas e inflación en materias primas (aluminio, edulcorantes)."
+  },
+  "JNJ": {
+    "name": "Johnson & Johnson",
+    "rating": "Wide",
+    "trend": "Stable",
+    "sources": [
+      "intangibles_regulatory",
+      "cost_advantages"
+    ],
+    "thesis": "Liderazgo global en productos farmacéuticos innovadores y dispositivos médicos (MedTech). Foso protegido por una vasta cartera de patentes, capacidades masivas de I+D y relaciones clínicas directas con hospitales y cirujanos en todo el mundo.",
+    "threats": "Pérdida de exclusividad por vencimiento de patentes clave (cliff de patentes) y competencia de biosimilares, además de litigios legales prolongados."
+  }
+}
