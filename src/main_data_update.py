@@ -34,13 +34,22 @@ def run_update(force_download: bool = False):
     # 2. Inicializar Downloader
     downloader = FinancialDataDownloader(cache_expiry_hours=24)
     
+    # Mapeo de tipos a etiquetas legibles
+    TYPE_LABELS = {
+        "equity": "[white]Equity[/white]",
+        "reit": "[yellow]REIT[/yellow]",
+        "equity_etf": "[blue]ETF Equity[/blue]",
+        "bond_etf": "[magenta]ETF Bonds[/magenta]",
+    }
+
     # Tabla de resultados
     results_table = Table(title="Resumen de Descarga y Actualizacion")
     results_table.add_column("Ticker", style="cyan", justify="center")
     results_table.add_column("Nombre", style="white")
+    results_table.add_column("Tipo", justify="center")
     results_table.add_column("Fundamentales", style="magenta", justify="center")
     results_table.add_column("Precios Historicos", style="magenta", justify="center")
-    results_table.add_column("Detalles / Estado", style="green")
+    results_table.add_column("Estado", style="green")
 
     # 3. Descargar datos con barra de progreso
     with Progress(
@@ -56,6 +65,8 @@ def run_update(force_download: bool = False):
         for item in watchlist:
             ticker = item["ticker"]
             name = item["name"]
+            asset_type = item.get("type", "equity")
+            type_label = TYPE_LABELS.get(asset_type, asset_type)
             
             progress.update(task, description=f"[yellow]Procesando [bold]{ticker}[/bold]...")
             
@@ -94,7 +105,7 @@ def run_update(force_download: bool = False):
                 if price_status == "N/A":
                     price_status = "[red]Error[/red]"
                     
-            results_table.add_row(ticker, name, fund_status, price_status, detail)
+            results_table.add_row(ticker, name, type_label, fund_status, price_status, detail)
             progress.advance(task)
 
     console.print("\n")
