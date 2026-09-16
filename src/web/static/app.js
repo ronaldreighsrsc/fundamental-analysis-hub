@@ -268,7 +268,7 @@ function renderPositionsTable(positions) {
       </td>
       <td><span class="chip-ticker">${pos.type || 'equity'}</span></td>
       <td style="text-align: right; font-weight: 600;">${pos.shares.toFixed(2)}</td>
-      <td style="text-align: right; color: var(--text-muted);">${formatCurrency(pos.avg_cost_price)}</td>
+      <td style="text-align: right; color: var(--text-muted);">${formatCurrency(pos.avg_cost)}</td>
       <td style="text-align: right; font-weight: 600;">${formatCurrency(pos.current_price)}</td>
       <td style="text-align: right; font-weight: 700;">${formatCurrency(pos.market_value)}</td>
       <td style="text-align: right; font-weight: 700; color: ${pnlColor};">

@@ -138,31 +138,36 @@ class PortfolioManager:
 
     def get_current_market_price(self, ticker: str) -> float:
         """
-        Obtiene el precio actual de mercado de un ticker desde la cache local
-        o directamente desde yfinance.
+        Obtiene el precio actual de mercado en tiempo real de un ticker desde yfinance.
+        Si la llamada falla o se esta sin conexion, utiliza la cache local como respaldo.
         """
         ticker_clean = ticker.strip().upper()
-        # 1. Intentar desde cache de fundamentales
+
+        # 1. Intentar desde yfinance en vivo (tiempo real / fast_info)
+        try:
+            t = yf.Ticker(ticker_clean)
+            fast_info = getattr(t, "fast_info", None)
+            if fast_info is not None:
+                last_p = fast_info.get("lastPrice") or fast_info.get("previousClose")
+                if last_p and float(last_p) > 0:
+                    return float(last_p)
+
+            q_type = str(getattr(fast_info, "quote_type", "")).upper() if fast_info else ""
+            if q_type != "ETF":
+                info = t.info or {}
+                p = info.get("currentPrice") or info.get("regularMarketPrice") or info.get("previousClose")
+                if p and float(p) > 0:
+                    return float(p)
+        except Exception:
+            pass
+
+        # 2. Respaldo de contingencia: cache local de fundamentales
         cached = self.downloader.get_cached_fundamentals(ticker_clean)
         if cached:
             info = cached.get("info", {})
             p = info.get("currentPrice") or info.get("regularMarketPrice") or info.get("previousClose")
             if p and float(p) > 0:
                 return float(p)
-
-        # 2. Intentar desde yfinance en vivo
-        try:
-            t = yf.Ticker(ticker_clean)
-            fast_info = getattr(t, "fast_info", {})
-            last_p = fast_info.get("lastPrice") or fast_info.get("previousClose")
-            if last_p and float(last_p) > 0:
-                return float(last_p)
-            info = t.info
-            p = info.get("currentPrice") or info.get("regularMarketPrice") or info.get("previousClose")
-            if p and float(p) > 0:
-                return float(p)
-        except Exception:
-            pass
 
         return 0.0
 
