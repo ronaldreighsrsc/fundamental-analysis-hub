@@ -9,5 +9,93 @@
     "fee": 0.0,
     "total": 100000.0,
     "notes": "Reinicio de portafolio con $100,000.00 USD"
+  },
+  {
+    "id": "74ab51a7-c0fe-4328-a943-f9218a80e122",
+    "timestamp": "2026-09-14T16:18:47.793819",
+    "type": "BUY",
+    "ticker": "MCD",
+    "shares": 41.0,
+    "price": 257.8800048828125,
+    "fee": 0.0,
+    "total": 10573.080200195312,
+    "notes": "Compra simulada desde Web Desk"
+  },
+  {
+    "id": "e700ae8a-8731-48f1-8c0b-5f35df9b4f82",
+    "timestamp": "2026-09-14T16:19:36.448760",
+    "type": "BUY",
+    "ticker": "NKE",
+    "shares": 135.0,
+    "price": 37.24,
+    "fee": 0.0,
+    "total": 5027.400000000001,
+    "notes": "Compra simulada desde Web Desk"
+  },
+  {
+    "id": "f13708eb-ff4a-4e3f-8b4a-57aef95f1bc3",
+    "timestamp": "2026-09-14T16:20:17.031529",
+    "type": "BUY",
+    "ticker": "TLT",
+    "shares": 150.0,
+    "price": 80.855,
+    "fee": 0.0,
+    "total": 12128.25,
+    "notes": "Compra simulada desde Web Desk"
+  },
+  {
+    "id": "eee70c57-fe2f-4b41-b884-1d569ad5dfff",
+    "timestamp": "2026-09-14T16:21:01.034590",
+    "type": "BUY",
+    "ticker": "IEF",
+    "shares": 138.0,
+    "price": 90.965,
+    "fee": 0.0,
+    "total": 12553.17,
+    "notes": "Compra simulada desde Web Desk"
+  },
+  {
+    "id": "2ba44907-fdbc-4722-a22c-fe55858e3ba1",
+    "timestamp": "2026-09-14T16:22:22.515102",
+    "type": "BUY",
+    "ticker": "XLU",
+    "shares": 500.0,
+    "price": 41.985,
+    "fee": 0.0,
+    "total": 20992.5,
+    "notes": "Compra simulada desde Web Desk"
+  },
+  {
+    "id": "fb186d11-3e03-46e2-bc75-2c02f89f1efe",
+    "timestamp": "2026-09-14T16:23:16.682407",
+    "type": "BUY",
+    "ticker": "PEP",
+    "shares": 90.0,
+    "price": 137.315,
+    "fee": 0.0,
+    "total": 12358.35,
+    "notes": "Compra simulada desde Web Desk"
+  },
+  {
+    "id": "448883f1-9593-41ad-99d3-0d5cb5171720",
+    "timestamp": "2026-09-14T16:24:47.387522",
+    "type": "BUY",
+    "ticker": "ENB",
+    "shares": 80.0,
+    "price": 48.32500076293945,
+    "fee": 0.0,
+    "total": 3866.0000610351562,
+    "notes": "Compra simulada desde Web Desk"
+  },
+  {
+    "id": "4870b495-0867-445a-9225-a50238ca6df0",
+    "timestamp": "2026-09-14T16:26:18.540501",
+    "type": "BUY",
+    "ticker": "SHY",
+    "shares": 180.0,
+    "price": 81.35,
+    "fee": 0.0,
+    "total": 14642.999999999998,
+    "notes": "Compra simulada desde Web Desk"
   }
 ]

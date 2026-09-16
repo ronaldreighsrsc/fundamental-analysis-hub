@@ -178,3 +178,62 @@ def test_api_buy_insufficient_funds(web_server_instance):
     with pytest.raises(urllib.error.HTTPError) as excinfo:
         urllib.request.urlopen(req)
     assert excinfo.value.code == 400
+
+
+def test_api_corporate_actions_and_split(web_server_instance):
+    base_url, _ = web_server_instance
+
+    # 1. Comprar acciones para tener una posicion
+    buy_payload = json.dumps({
+        "ticker": "AAPL",
+        "shares": 10,
+        "price": 150.0,
+        "fee": 0.0,
+    }).encode("utf-8")
+    req_buy = urllib.request.Request(
+        f"{base_url}/api/buy",
+        data=buy_payload,
+        headers={"Content-Type": "application/json"},
+    )
+    urllib.request.urlopen(req_buy)
+
+    # 2. Registrar split vía API
+    split_payload = json.dumps({
+        "ticker": "AAPL",
+        "ratio": 2.0,
+        "notes": "Split 2:1 test",
+    }).encode("utf-8")
+    req_split = urllib.request.Request(
+        f"{base_url}/api/split",
+        data=split_payload,
+        headers={"Content-Type": "application/json"},
+    )
+    res_split = urllib.request.urlopen(req_split)
+    assert res_split.status == 200
+    split_data = json.loads(res_split.read().decode("utf-8"))
+    assert split_data["success"] is True
+    assert split_data["transaction"]["type"] == "SPLIT"
+
+    # 3. Sincronizar eventos corporativos
+    sync_payload = json.dumps({}).encode("utf-8")
+    req_sync = urllib.request.Request(
+        f"{base_url}/api/sync-corporate-actions",
+        data=sync_payload,
+        headers={"Content-Type": "application/json"},
+    )
+    res_sync = urllib.request.urlopen(req_sync)
+    assert res_sync.status == 200
+    sync_data = json.loads(res_sync.read().decode("utf-8"))
+    assert sync_data["success"] is True
+    assert "result" in sync_data
+
+
+def test_api_dividend_calendar(web_server_instance):
+    base_url, _ = web_server_instance
+    req = urllib.request.urlopen(f"{base_url}/api/dividend-calendar")
+    assert req.status == 200
+    data = json.loads(req.read().decode("utf-8"))
+    assert "portfolio_annual_income" in data
+    assert "portfolio_dividend_yield_pct" in data
+    assert "monthly_projections" in data
+

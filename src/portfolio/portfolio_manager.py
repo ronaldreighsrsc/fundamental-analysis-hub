@@ -4,6 +4,7 @@ import uuid
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
+import pandas as pd
 import yfinance as yf
 
 from src.data.downloader import FinancialDataDownloader
@@ -430,6 +431,46 @@ class PortfolioManager:
         self._save_transactions(txs)
         return tx
 
+    def record_split(
+        self,
+        ticker: str,
+        ratio: float,
+        split_date: Optional[str] = None,
+        notes: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Registra un desdoblamiento de acciones (Stock Split / Reverse Split).
+        ratio: factor multiplicador de acciones (ej. 4.0 para 4:1, 10.0 para 10:1, 0.5 para 1:2).
+        """
+        ticker_clean = ticker.strip().upper()
+        if ratio <= 0:
+            raise ValueError("El ratio de split debe ser un valor positivo mayor a 0.")
+
+        positions = self.get_positions()
+        if ticker_clean not in positions or positions[ticker_clean]["shares"] <= 0:
+            raise ValueError(f"No posees acciones de {ticker_clean} para aplicar un split.")
+
+        txs = self._load_transactions()
+        timestamp = split_date if split_date else datetime.now().isoformat()
+        if notes is None:
+            notes = f"Desdoblamiento corporativo (Split) {ratio:g}:1"
+
+        tx = {
+            "id": str(uuid.uuid4()),
+            "timestamp": timestamp,
+            "type": "SPLIT",
+            "ticker": ticker_clean,
+            "shares": float(ratio),
+            "price": 0.0,
+            "fee": 0.0,
+            "total": 0.0,
+            "notes": notes,
+        }
+        txs.append(tx)
+        txs.sort(key=lambda x: x.get("timestamp", ""))
+        self._save_transactions(txs)
+        return tx
+
     def get_positions(self) -> Dict[str, Dict[str, Any]]:
         """
         Reconstruye el estado actual de todas las posiciones abiertas re-procesando
@@ -461,6 +502,11 @@ class PortfolioManager:
                     raw_positions[ticker]["total_cost"] -= (shares * avg_cost)
                     if raw_positions[ticker]["shares"] <= 0.000001:
                         del raw_positions[ticker]
+
+            elif t_type == "SPLIT":
+                split_ratio = float(tx.get("shares", 1.0))
+                if ticker in raw_positions and raw_positions[ticker]["shares"] > 0 and split_ratio > 0:
+                    raw_positions[ticker]["shares"] *= split_ratio
 
         # Enriquecer posiciones con precios de mercado y metadatos
         positions = {}
@@ -562,6 +608,10 @@ class PortfolioManager:
                     tracking_positions[ticker]["total_cost"] -= cost_basis_sold
                     if tracking_positions[ticker]["shares"] <= 0.000001:
                         del tracking_positions[ticker]
+            elif t_type == "SPLIT":
+                split_ratio = float(tx.get("shares", 1.0))
+                if ticker in tracking_positions and tracking_positions[ticker]["shares"] > 0 and split_ratio > 0:
+                    tracking_positions[ticker]["shares"] *= split_ratio
 
         positions = self.get_positions()
         invested_capital = sum(p["total_cost"] for p in positions.values())
@@ -673,4 +723,256 @@ class PortfolioManager:
                 f.write("id,timestamp,type,ticker,shares,price,fee,total,notes\n")
 
         return str(dest_path.resolve())
+
+    def sync_corporate_actions(self) -> Dict[str, Any]:
+        """
+        Escanea y sincroniza de forma automatica e idempotente los eventos corporativos
+        (Stock Splits y Dividendos en efectivo con fechas de corte Ex-Date) para todos los
+        activos operados en el portafolio.
+        """
+        txs = self._load_transactions()
+        tickers = sorted(list({tx.get("ticker", "") for tx in txs if tx.get("ticker") not in ("", "CASH")}))
+
+        applied_splits = []
+        applied_dividends = []
+
+        for ticker in tickers:
+            ticker_txs = [t for t in txs if t.get("ticker") == ticker]
+            if not ticker_txs:
+                continue
+
+            buy_txs = [t for t in ticker_txs if t.get("type") == "BUY"]
+            if not buy_txs:
+                continue
+
+            earliest_buy = min(t.get("timestamp", "")[:10] for t in buy_txs)
+            try:
+                earliest_date = datetime.strptime(earliest_buy, "%Y-%m-%d").date()
+            except Exception:
+                continue
+
+            try:
+                t_obj = yf.Ticker(ticker)
+                actions = t_obj.actions
+            except Exception:
+                continue
+
+            if actions is None or actions.empty:
+                continue
+
+            def _calc_shares_before(cutoff_date_str: str) -> float:
+                sh = 0.0
+                for t in txs:
+                    if t.get("ticker") != ticker:
+                        continue
+                    t_date = t.get("timestamp", "")[:10]
+                    if t_date >= cutoff_date_str:
+                        continue
+                    t_type = t.get("type")
+                    if t_type == "BUY":
+                        sh += float(t.get("shares", 0.0))
+                    elif t_type == "SELL":
+                        sh = max(0.0, sh - float(t.get("shares", 0.0)))
+                    elif t_type == "SPLIT":
+                        sh *= float(t.get("shares", 1.0))
+                return round(sh, 6)
+
+            for idx, row in actions.iterrows():
+                try:
+                    action_date = idx.date()
+                except Exception:
+                    continue
+
+                if action_date < earliest_date:
+                    continue
+
+                action_date_str = str(action_date)
+
+                # 1. Desdoblamientos (Splits)
+                split_val = float(row.get("Stock Splits", 0.0))
+                if split_val > 0.0 and split_val != 1.0:
+                    already_logged = any(
+                        t.get("type") == "SPLIT" and
+                        t.get("ticker") == ticker and
+                        t.get("timestamp", "")[:10] == action_date_str
+                        for t in txs
+                    )
+                    if not already_logged:
+                        shares_held = _calc_shares_before(action_date_str)
+                        if shares_held > 0.0001:
+                            new_tx = {
+                                "id": str(uuid.uuid4()),
+                                "timestamp": f"{action_date_str}T09:30:00",
+                                "type": "SPLIT",
+                                "ticker": ticker,
+                                "shares": split_val,
+                                "price": 0.0,
+                                "fee": 0.0,
+                                "total": 0.0,
+                                "notes": f"Desdoblamiento corporativo (Split) {split_val:g}:1 (Ex-Date: {action_date_str})",
+                            }
+                            txs.append(new_tx)
+                            applied_splits.append({
+                                "ticker": ticker,
+                                "date": action_date_str,
+                                "ratio": split_val,
+                                "shares_before": shares_held,
+                                "shares_after": round(shares_held * split_val, 4),
+                            })
+
+                # 2. Dividendos en Efectivo
+                div_val = float(row.get("Dividends", 0.0))
+                if div_val > 0.0:
+                    already_logged = any(
+                        t.get("type") == "DIVIDEND" and
+                        t.get("ticker") == ticker and
+                        (t.get("timestamp", "")[:10] == action_date_str or f"Ex-Date: {action_date_str}" in t.get("notes", ""))
+                        for t in txs
+                    )
+                    if not already_logged:
+                        shares_held = _calc_shares_before(action_date_str)
+                        if shares_held > 0.0001:
+                            total_div = round(shares_held * div_val, 2)
+                            new_tx = {
+                                "id": str(uuid.uuid4()),
+                                "timestamp": f"{action_date_str}T16:00:00",
+                                "type": "DIVIDEND",
+                                "ticker": ticker,
+                                "shares": round(shares_held, 4),
+                                "price": round(div_val, 4),
+                                "fee": 0.0,
+                                "total": total_div,
+                                "notes": f"Dividendo automático {ticker}: {shares_held:g} accs × ${div_val:.4f} (Ex-Date: {action_date_str})",
+                            }
+                            txs.append(new_tx)
+                            applied_dividends.append({
+                                "ticker": ticker,
+                                "date": action_date_str,
+                                "dps": round(div_val, 4),
+                                "shares": round(shares_held, 4),
+                                "total": total_div,
+                            })
+
+        if applied_splits or applied_dividends:
+            txs.sort(key=lambda x: x.get("timestamp", ""))
+            self._save_transactions(txs)
+
+        total_credited = round(sum(d["total"] for d in applied_dividends), 2)
+        return {
+            "applied_splits": applied_splits,
+            "applied_dividends": applied_dividends,
+            "total_splits_count": len(applied_splits),
+            "total_dividends_count": len(applied_dividends),
+            "total_dividends_credited": total_credited,
+        }
+
+    def get_dividend_calendar(self) -> Dict[str, Any]:
+        """
+        Calcula el calendario proyectado de dividendos para las posiciones abiertas,
+        junto con métricas de Dividend Yield y Yield on Cost (YoC).
+        """
+        positions = self.get_positions()
+        summary = self.get_summary()
+        port_val = summary["portfolio_value"]
+
+        holdings_dividends = []
+        total_annual_income = 0.0
+
+        today = datetime.now().date()
+        months_proj = {}
+        for m_offset in range(12):
+            tot_m = (today.month - 1) + m_offset
+            y = today.year + (tot_m // 12)
+            m = (tot_m % 12) + 1
+            key = f"{y}-{m:02d}"
+            months_proj[key] = 0.0
+
+        for ticker, pos in positions.items():
+            shares = pos["shares"]
+            if shares <= 0:
+                continue
+            avg_cost = pos["avg_cost"]
+            curr_price = pos["current_price"]
+
+            dps = 0.0
+            div_yield = 0.0
+            ex_date_str = "N/A"
+            pay_date_str = "N/A"
+
+            try:
+                t_obj = yf.Ticker(ticker)
+                q_type = ""
+                try:
+                    q_type = str(getattr(t_obj.fast_info, "quote_type", "")).upper()
+                except Exception:
+                    pass
+
+                info = {}
+                if q_type != "ETF":
+                    try:
+                        info = t_obj.info or {}
+                    except Exception:
+                        info = {}
+
+                dps = float(info.get("dividendRate") or 0.0)
+                div_yield = float(info.get("dividendYield") or 0.0) * 100
+
+                if dps <= 0.0:
+                    divs = t_obj.dividends
+                    if divs is not None and not divs.empty:
+                        try:
+                            recent = divs.tail(12 if q_type == "ETF" else 4)
+                            dps = float(recent.sum())
+                            if curr_price > 0:
+                                div_yield = (dps / curr_price) * 100
+                        except Exception:
+                            pass
+
+                cal = None
+                if q_type != "ETF":
+                    try:
+                        cal = t_obj.calendar
+                    except Exception:
+                        cal = None
+
+                if cal:
+                    if "Ex-Dividend Date" in cal and cal["Ex-Dividend Date"]:
+                        ex_date_str = str(cal["Ex-Dividend Date"])
+                    if "Dividend Date" in cal and cal["Dividend Date"]:
+                        pay_date_str = str(cal["Dividend Date"])
+            except Exception:
+                pass
+
+            annual_income = round(shares * dps, 2)
+            total_annual_income += annual_income
+
+            yoc = round((dps / avg_cost * 100), 2) if avg_cost > 0 else 0.0
+
+            if annual_income > 0:
+                quarterly_payout = round(annual_income / 4.0, 2)
+                q_months = [(today.month - 1 + i * 3) % 12 + 1 for i in range(4)]
+                for m_key in months_proj:
+                    m_num = int(m_key.split("-")[1])
+                    if m_num in q_months:
+                        months_proj[m_key] = round(months_proj[m_key] + quarterly_payout, 2)
+
+            holdings_dividends.append({
+                "ticker": ticker,
+                "shares": shares,
+                "dps": round(dps, 4),
+                "annual_income": annual_income,
+                "dividend_yield_pct": round(div_yield, 2),
+                "yield_on_cost_pct": yoc,
+                "ex_dividend_date": ex_date_str,
+                "pay_date": pay_date_str,
+            })
+
+        portfolio_dividend_yield = round((total_annual_income / port_val * 100), 2) if port_val > 0 else 0.0
+
+        return {
+            "portfolio_annual_income": round(total_annual_income, 2),
+            "portfolio_dividend_yield_pct": portfolio_dividend_yield,
+            "monthly_projections": months_proj,
+            "holdings": holdings_dividends,
+        }
 

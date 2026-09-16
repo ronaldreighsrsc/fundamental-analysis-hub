@@ -52,7 +52,54 @@ async function refreshAll() {
     fetchPortfolio(),
     fetchTimeline(),
     fetchHistory(),
+    fetchDividendCalendar(),
   ]);
+}
+
+async function fetchDividendCalendar() {
+  try {
+    const res = await fetch('/api/dividend-calendar');
+    if (!res.ok) return;
+    const data = await res.json();
+    renderDividendCalendar(data);
+  } catch (err) {
+    console.error('Error al cargar calendario de dividendos:', err);
+  }
+}
+
+function renderDividendCalendar(data) {
+  const badgeAnnual = document.getElementById('badge-annual-dividends');
+  if (badgeAnnual) {
+    badgeAnnual.textContent = `Ingreso Anual: ${formatCurrency(data.portfolio_annual_income || 0)}`;
+  }
+  const badgeYield = document.getElementById('badge-portfolio-yield');
+  if (badgeYield) {
+    badgeYield.textContent = `Dividend Yield: ${(data.portfolio_dividend_yield_pct || 0).toFixed(2)}%`;
+  }
+
+  const tbody = document.getElementById('tbody-dividends');
+  if (!tbody) return;
+
+  const holdings = data.holdings || [];
+  if (holdings.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-dim); padding: 18px;">No hay posiciones generadoras de dividendos abiertas.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = holdings.map(h => {
+    return `
+      <tr>
+        <td style="font-weight: 700; color: var(--accent-cyan);">${h.ticker}</td>
+        <td style="text-align: right;">${h.shares}</td>
+        <td style="text-align: right;">$${h.dps.toFixed(4)}</td>
+        <td style="text-align: right; color: var(--accent-emerald); font-weight: 600;">${formatCurrency(h.annual_income)}</td>
+        <td style="text-align: right;">${h.dividend_yield_pct.toFixed(2)}%</td>
+        <td style="text-align: right; color: var(--accent-cyan); font-weight: 600;">${h.yield_on_cost_pct.toFixed(2)}%</td>
+        <td style="text-align: center; color: var(--text-muted);">${h.ex_dividend_date}</td>
+        <td style="text-align: center; color: var(--text-muted);">${h.pay_date}</td>
+      </tr>
+    `;
+  }).join('');
 }
 
 async function fetchPortfolio() {
@@ -139,6 +186,18 @@ function renderTimelineStats(metrics) {
   kpiAlpha.style.color = metrics.alpha_pct >= 0 ? 'var(--accent-emerald)' : 'var(--accent-red)';
 
   document.getElementById('kpi-benchmark-val').textContent = formatCurrency(metrics.current_benchmark_val);
+
+  const cagrEl = document.getElementById('kpi-cagr');
+  if (cagrEl) {
+    const cagrPort = metrics.cagr_portfolio_pct || 0;
+    cagrEl.textContent = formatPct(cagrPort);
+    cagrEl.style.color = cagrPort >= 0 ? 'var(--accent-emerald)' : 'var(--accent-red)';
+  }
+  const cagrSub = document.getElementById('kpi-cagr-sub');
+  if (cagrSub) {
+    const cagrBench = metrics.cagr_benchmark_pct || 0;
+    cagrSub.textContent = `vs S&P 500: ${formatPct(cagrBench)}`;
+  }
 }
 
 function renderKpiCards(summary) {
@@ -776,6 +835,42 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Header Actions
+  const btnSyncCorp = document.getElementById('btn-sync-corporate');
+  if (btnSyncCorp) {
+    btnSyncCorp.addEventListener('click', async () => {
+      const origHtml = btnSyncCorp.innerHTML;
+      btnSyncCorp.disabled = true;
+      btnSyncCorp.innerHTML = '<span>⏳</span> Sincronizando...';
+
+      try {
+        const res = await fetch('/api/sync-corporate-actions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al sincronizar');
+
+        const r = data.result || {};
+        const splitsCount = r.total_splits_count || 0;
+        const divsCount = r.total_dividends_count || 0;
+        const credited = r.total_dividends_credited || 0;
+
+        let msg = `Sincronización completada: ${splitsCount} splits aplicados, ${divsCount} dividendos cobrados (+$${credited.toFixed(2)} USD).`;
+        if (splitsCount === 0 && divsCount === 0) {
+          msg = 'No se detectaron splits ni dividendos nuevos pendientes.';
+        }
+        showToast(msg, 'success');
+        await refreshAll();
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btnSyncCorp.disabled = false;
+        btnSyncCorp.innerHTML = origHtml;
+      }
+    });
+  }
+
   document.getElementById('btn-export-csv').addEventListener('click', () => {
     window.location.href = '/api/export-csv';
   });

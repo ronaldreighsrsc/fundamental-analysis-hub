@@ -53,6 +53,9 @@
     </div>
 
     <div class="nav-actions">
+      <button id="btn-sync-corporate" class="btn-secondary" title="Sincronizar dividendos y splits automáticamente">
+        <span>⚡</span> Sync Splits & Divs
+      </button>
       <button id="btn-export-csv" class="btn-secondary" title="Exportar historial a Excel / CSV">
         <span>📥</span> Exportar CSV
       </button>
@@ -110,6 +113,15 @@
         </div>
         <div class="metric-value" id="kpi-benchmark-val">$100,000.00</div>
         <div class="metric-sub" id="kpi-alpha-text">Alpha: +0.00% vs mercado</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-card-header">
+          <span class="metric-title">CAGR Anualizado (TWR)</span>
+          <span class="metric-icon">🚀</span>
+        </div>
+        <div class="metric-value" id="kpi-cagr" style="color: var(--accent-emerald);">+0.00%</div>
+        <div class="metric-sub" id="kpi-cagr-sub">vs S&P 500: +0.00%</div>
       </div>
     </section>
 
@@ -360,7 +372,39 @@
         </div>
         <div id="chart-sectors" class="chart-container"></div>
       </section>
-    </div>
+    <!-- Dividend Calendar & Passive Income Stream -->
+    <section class="card-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span>💰</span> Calendario y Proyección de Dividendos (Flujo de Efectivo Pasivo)
+        </h2>
+        <div style="display: flex; gap: 12px; align-items: center;">
+          <span class="badge-green" id="badge-annual-dividends">Ingreso Anual: $0.00</span>
+          <span class="badge-cyan" id="badge-portfolio-yield">Dividend Yield: 0.00%</span>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="data-table" id="table-dividends">
+          <thead>
+            <tr>
+              <th>Ticker</th>
+              <th style="text-align: right;">Acciones</th>
+              <th style="text-align: right;">DPS Anual ($)</th>
+              <th style="text-align: right;">Ingreso Estimado Anual</th>
+              <th style="text-align: right;">Div Yield</th>
+              <th style="text-align: right;">Yield on Cost (YoC)</th>
+              <th style="text-align: center;">Próx. Ex-Dividend Date</th>
+              <th style="text-align: center;">Próx. Pay Date</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-dividends">
+            <tr>
+              <td colspan="8" style="text-align: center; color: var(--text-dim); padding: 18px;">No hay posiciones generadoras de dividendos abiertas.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
     <!-- Transaction History Audit Ledger -->
     <section class="card-section">

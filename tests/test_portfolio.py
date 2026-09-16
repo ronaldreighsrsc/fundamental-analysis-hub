@@ -194,6 +194,8 @@ def test_benchmark_comparison_and_timeline(temp_portfolio_mgr):
     assert "current_nav" in metrics
     assert "cumulative_deposits" in metrics
     assert "alpha_pct" in metrics
+    assert "cagr_portfolio_pct" in metrics
+    assert "cagr_benchmark_pct" in metrics
     assert metrics["cumulative_deposits"] == 101_500.0
 
     timeline = bench_data["timeline"]
@@ -201,5 +203,58 @@ def test_benchmark_comparison_and_timeline(temp_portfolio_mgr):
     assert len(timeline["portfolio_nav"]) == len(timeline["dates"])
     assert len(timeline["cumulative_deposits"]) == len(timeline["dates"])
     assert len(timeline["benchmark_nav"]) == len(timeline["dates"])
+
+
+def test_record_split_and_sell(temp_portfolio_mgr):
+    # 1. Comprar 10 acciones a $120 ($1,200)
+    temp_portfolio_mgr.buy(ticker="SPLIT_TEST", shares=10, price=120.0, fee=0.0)
+
+    # 2. Registrar split 4:1
+    split_tx = temp_portfolio_mgr.record_split(ticker="SPLIT_TEST", ratio=4.0)
+    assert split_tx["type"] == "SPLIT"
+    assert split_tx["shares"] == 4.0
+
+    positions = temp_portfolio_mgr.get_positions()
+    assert "SPLIT_TEST" in positions
+    pos = positions["SPLIT_TEST"]
+    assert pos["shares"] == 40.0
+    assert pos["avg_cost"] == 30.0
+    assert pos["total_cost"] == 1200.0
+
+    summary = temp_portfolio_mgr.get_summary()
+    assert summary["cash_balance"] == 100_000.0 - 1200.0
+
+    # 3. Vender 10 acciones a $40 ($400 recaudados)
+    # P&L realizado: 10 * (40 - 30) = $100
+    temp_portfolio_mgr.sell(ticker="SPLIT_TEST", shares=10, price=40.0, fee=0.0)
+    summary2 = temp_portfolio_mgr.get_summary()
+    assert summary2["realized_pnl"] == 100.0
+    positions2 = temp_portfolio_mgr.get_positions()
+    assert positions2["SPLIT_TEST"]["shares"] == 30.0
+    assert positions2["SPLIT_TEST"]["total_cost"] == 900.0
+    assert positions2["SPLIT_TEST"]["avg_cost"] == 30.0
+
+
+def test_sync_corporate_actions_idempotent(temp_portfolio_mgr):
+    # Sincronizacion inicial (sin posiciones de renta variable)
+    res = temp_portfolio_mgr.sync_corporate_actions()
+    assert res["total_splits_count"] == 0
+    assert res["total_dividends_count"] == 0
+    assert res["total_dividends_credited"] == 0.0
+
+    # Idempotencia al re-ejecutar
+    res2 = temp_portfolio_mgr.sync_corporate_actions()
+    assert res2["total_splits_count"] == 0
+    assert res2["total_dividends_count"] == 0
+
+
+def test_dividend_calendar(temp_portfolio_mgr):
+    cal_data = temp_portfolio_mgr.get_dividend_calendar()
+    assert "portfolio_annual_income" in cal_data
+    assert "portfolio_dividend_yield_pct" in cal_data
+    assert "monthly_projections" in cal_data
+    assert "holdings" in cal_data
+    assert len(cal_data["monthly_projections"]) == 12
+
 
 

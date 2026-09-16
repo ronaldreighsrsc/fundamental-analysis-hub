@@ -71,13 +71,18 @@ def render_terminal_portfolio(manager: PortfolioManager):
     bench_ret_str = _format_pct(bench_metrics.get("benchmark_return_pct", 0.0))
     alpha_str = _format_pct(bench_metrics.get("alpha_pct", 0.0))
     bench_val_str = _format_currency(bench_metrics.get("current_benchmark_val", 0.0))
+    cagr_port = bench_metrics.get("cagr_portfolio_pct", 0.0)
+    cagr_bench = bench_metrics.get("cagr_benchmark_pct", 0.0)
+    cagr_str = f"{_format_pct(cagr_port)} (vs S&P 500 {_format_pct(cagr_bench)})"
+    divs_total_str = _format_currency(summary["dividends_total"])
 
     header_text = f"""[bold yellow]VALOR TOTAL DEL PORTAFOLIO (NAV):[/bold yellow] [bold white]{total_nav_str}[/bold white]   |   [bold yellow]RENTABILIDAD CARTERA:[/bold yellow] {total_return_str}
   [bold yellow]BENCHMARK S&P 500 (SPY):[/bold yellow]          [bold white]{bench_val_str}[/bold white] ({bench_ret_str})   |   [bold yellow]ALPHA GENERADO:[/bold yellow]       {alpha_str}
+  [bold yellow]CAGR ANUALIZADO (TWR):[/bold yellow]            [bold white]{cagr_str}[/bold white]
 
-  * [cyan]Efectivo Disponible:[/cyan] [bold white]{cash_str}[/bold white]     * [cyan]Capital Invertido:[/cyan] [bold white]{invested_str}[/bold white]
+  * [cyan]Efectivo Disponible:[/cyan] [bold white]{cash_str}[/bold white]     * [cyan]Capital Invertido:[/cyan]     [bold white]{invested_str}[/bold white]
   * [cyan]P&L No Realizado:[/cyan]   {unrealized_pnl_str}        * [cyan]P&L Realizado Cerrado:[/cyan] [bold white]{realized_pnl_str}[/bold white]
-  * [cyan]Aportaciones Netas:[/cyan] [bold white]{deposits_str}[/bold white]        * [cyan]Posiciones Abiertas:[/cyan] [bold white]{summary['positions_count']}[/bold white]
+  * [cyan]Aportaciones Netas:[/cyan] [bold white]{deposits_str}[/bold white]        * [cyan]Dividendos Cobrados:[/cyan]   [bold green]{divs_total_str}[/bold green]
 """
     console.print(
         Panel(header_text, title="[bold green]SIMULADOR DE INVERSIONES & PORTAFOLIO[/bold green]", border_style="green")

@@ -261,6 +261,11 @@ class PortfolioAnalytics:
                     cash += t_total
                     shares_held[t_ticker] = max(0.0, shares_held.get(t_ticker, 0.0) - t_shares)
 
+                elif t_type == "SPLIT":
+                    ratio = float(tx.get("shares", 1.0))
+                    if ratio > 0:
+                        shares_held[t_ticker] = shares_held.get(t_ticker, 0.0) * ratio
+
                 elif t_type == "DIVIDEND":
                     cash += t_total
 
@@ -296,6 +301,28 @@ class PortfolioAnalytics:
         final_bench_ret = bench_ret_series[latest_idx] if bench_ret_series else 0.0
         final_alpha = alpha_series[latest_idx] if alpha_series else 0.0
 
+        # CAGR / Retorno Compuesto Anualizado
+        cagr_port = 0.0
+        cagr_bench = 0.0
+        cagr_alpha = 0.0
+
+        if timeline_dates and len(timeline_dates) >= 2:
+            try:
+                dt_start = datetime.strptime(timeline_dates[0], "%Y-%m-%d")
+                dt_end = datetime.strptime(timeline_dates[-1], "%Y-%m-%d")
+                days_elapsed = max(1, (dt_end - dt_start).days)
+                if days_elapsed >= 7:  # Minimo 7 dias para anualizar
+                    years = days_elapsed / 365.25
+                    tot_factor_port = max(0.0001, 1.0 + (final_port_ret / 100.0))
+                    cagr_port = round(((tot_factor_port ** (1.0 / years)) - 1.0) * 100.0, 2)
+
+                    tot_factor_bench = max(0.0001, 1.0 + (final_bench_ret / 100.0))
+                    cagr_bench = round(((tot_factor_bench ** (1.0 / years)) - 1.0) * 100.0, 2)
+
+                    cagr_alpha = round(cagr_port - cagr_bench, 2)
+            except Exception:
+                pass
+
         return {
             "benchmark_ticker": benchmark_ticker,
             "timeline": {
@@ -314,6 +341,9 @@ class PortfolioAnalytics:
                 "portfolio_return_pct": final_port_ret,
                 "benchmark_return_pct": final_bench_ret,
                 "alpha_pct": final_alpha,
+                "cagr_portfolio_pct": cagr_port,
+                "cagr_benchmark_pct": cagr_bench,
+                "cagr_alpha_pct": cagr_alpha,
                 "start_date": timeline_dates[0] if timeline_dates else today_date,
                 "end_date": timeline_dates[-1] if timeline_dates else today_date,
             },

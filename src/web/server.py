@@ -120,6 +120,11 @@ class PortfolioWebHandler(SimpleHTTPRequestHandler):
             self._send_json({"watchlist": watchlist})
             return
 
+        elif path == "/api/dividend-calendar":
+            calendar_data = self.manager.get_dividend_calendar()
+            self._send_json(calendar_data)
+            return
+
         elif path == "/api/export-csv":
             csv_path = self.manager.export_csv()
             with open(csv_path, "r", encoding="utf-8") as f:
@@ -213,6 +218,19 @@ class PortfolioWebHandler(SimpleHTTPRequestHandler):
                 initial_cash = float(body.get("initial_cash", 100_000.0))
                 self.manager.reset_portfolio(initial_cash=initial_cash)
                 self._send_json({"success": True, "initial_cash": initial_cash})
+                return
+
+            elif path == "/api/sync-corporate-actions":
+                res = self.manager.sync_corporate_actions()
+                self._send_json({"success": True, "result": res})
+                return
+
+            elif path == "/api/split":
+                ticker = body.get("ticker", "").strip().upper()
+                ratio = float(body.get("ratio", 1.0))
+                notes = body.get("notes", None)
+                tx = self.manager.record_split(ticker=ticker, ratio=ratio, notes=notes)
+                self._send_json({"success": True, "transaction": tx})
                 return
 
             else:

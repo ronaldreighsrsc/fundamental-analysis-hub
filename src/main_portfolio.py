@@ -2,6 +2,8 @@ import sys
 import os
 import argparse
 from rich.console import Console
+from rich.table import Table
+from rich import box
 
 # Asegurar que el modulo src sea importable
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -54,6 +56,9 @@ def run():
     parser.add_argument("--backup", action="store_true", help="Crear respaldo JSON portable del portafolio en exports/backups/")
     parser.add_argument("--restore", type=str, default=None, help="Restaurar portafolio desde archivo JSON de respaldo")
     parser.add_argument("--export-csv", action="store_true", help="Exportar todas las transacciones auditadas a formato CSV")
+    parser.add_argument("--sync-actions", action="store_true", help="Sincronizar y cobrar automaticamente dividendos y desdoblamientos (splits)")
+    parser.add_argument("--dividend-calendar", action="store_true", help="Mostrar calendario proyectado de dividendos y metricas de Yield on Cost")
+    parser.add_argument("--split", type=float, default=None, help="Registrar un desdoblamiento de acciones manual (ej. --split 10 --ticker NVDA)")
 
 
 
@@ -90,6 +95,80 @@ def run():
             return
         except Exception as e:
             console.print(f"[bold red]Error al exportar CSV: {e}[/bold red]\n")
+            return
+
+    # Sincronizacion de eventos corporativos (Splits y Dividendos)
+    if args.sync_actions:
+        try:
+            with console.status("[bold cyan]Sincronizando eventos corporativos oficiales (Splits & Dividendos)...[/bold cyan]"):
+                res = manager.sync_corporate_actions()
+            splits = res.get("applied_splits", [])
+            divs = res.get("applied_dividends", [])
+            total_credited = res.get("total_dividends_credited", 0.0)
+
+            console.print("\n[bold green]=== SINCRONIZACIÓN DE ACCIONES CORPORATIVAS COMPLETADA ===[/bold green]")
+            if splits:
+                console.print(f"[bold cyan]Splits aplicados ({len(splits)}):[/bold cyan]")
+                for s in splits:
+                    console.print(f"  • [yellow]{s['ticker']}[/yellow]: Split {s['ratio']:g}:1 el {s['date']} ({s['shares_before']:g} -> {s['shares_after']:g} accs)")
+            else:
+                console.print("[dim]No se detectaron nuevos splits pendientes.[/dim]")
+
+            if divs:
+                console.print(f"\n[bold cyan]Dividendos acreditados en caja ({len(divs)}):[/bold cyan]")
+                for d in divs:
+                    console.print(f"  • [yellow]{d['ticker']}[/yellow]: ${d['dps']:.4f}/acc el {d['date']} ({d['shares']} accs) -> [green]+${d['total']:,.2f} USD[/green]")
+                console.print(f"\n[bold green]Total efectivo acreditado: +${total_credited:,.2f} USD[/bold green]\n")
+            else:
+                console.print("[dim]No se detectaron dividendos pendientes por cobrar.[/dim]\n")
+        except Exception as e:
+            console.print(f"[bold red]Error al sincronizar eventos corporativos: {e}[/bold red]\n")
+        render_terminal_portfolio(manager)
+        return
+
+    # Calendario y proyeccion de dividendos
+    if args.dividend_calendar:
+        try:
+            with console.status("[bold cyan]Calculando proyeccion de dividendos y Yield on Cost...[/bold cyan]"):
+                cal_data = manager.get_dividend_calendar()
+            table = Table(title="Calendario y Proyeccion de Dividendos", box=box.ROUNDED)
+            table.add_column("Ticker", style="bold yellow")
+            table.add_column("Acciones", justify="right")
+            table.add_column("DPS Anual ($)", justify="right")
+            table.add_column("Ingreso Anual ($)", justify="right", style="green")
+            table.add_column("Div Yield", justify="right")
+            table.add_column("Yield on Cost (YoC)", justify="right", style="bold cyan")
+            table.add_column("Prox Ex-Date", justify="center")
+            table.add_column("Prox Pay Date", justify="center")
+
+            for h in cal_data.get("holdings", []):
+                table.add_row(
+                    h["ticker"],
+                    f"{h['shares']:g}",
+                    f"${h['dps']:,.2f}",
+                    f"${h['annual_income']:,.2f}",
+                    f"{h['dividend_yield_pct']:.2f}%",
+                    f"{h['yield_on_cost_pct']:.2f}%",
+                    h["ex_dividend_date"],
+                    h["pay_date"],
+                )
+            console.print(table)
+            console.print(f"\n[bold green]Ingreso Total Anual Estimado:[/bold green] ${cal_data['portfolio_annual_income']:,.2f} USD")
+            console.print(f"[bold cyan]Dividend Yield Ponderado de Cartera:[/bold cyan] {cal_data['portfolio_dividend_yield_pct']:.2f}%\n")
+        except Exception as e:
+            console.print(f"[bold red]Error al obtener calendario de dividendos: {e}[/bold red]\n")
+        return
+
+    # Registro manual de Split
+    if args.split is not None:
+        if not args.ticker:
+            console.print("[bold red]Debes especificar --ticker para aplicar el split (ej. --split 4 --ticker AAPL).[/bold red]")
+            return
+        try:
+            tx = manager.record_split(ticker=args.ticker, ratio=args.split, notes=args.notes or None)
+            console.print(f"[bold green]Split {args.split:g}:1 registrado exitosamente para {args.ticker}.[/bold green]\n")
+        except Exception as e:
+            console.print(f"[bold red]Error al registrar split: {e}[/bold red]\n")
             return
 
     # 2. Reinicio de portafolio
