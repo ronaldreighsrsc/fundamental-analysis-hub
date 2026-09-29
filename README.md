@@ -295,15 +295,6 @@ pytest -v
 
 ---
 
-### 8. Recursos de Empleabilidad & Pitch de Entrevistas
-
-Para candidatos a puestos de **Trainee / Junior Financial Analyst, Equity Research o FinTech**, consulta el archivo [CAREER_PORTFOLIO_GUIDE.md](CAREER_PORTFOLIO_GUIDE.md), que incluye:
-- El código exacto en formato LaTeX listo para tu CV.
-- Textos de impacto para LinkedIn y portafolios de GitHub.
-- Playbook técnico con las 5 preguntas y respuestas clave de entrevista financiera (Reverse DCF, Dilución por SBC, Ajuste Graham FRED AAA, Heurísticas de Solvencia).
-
----
-
 ## 📜 Licencia
 
 Distribuido bajo la Licencia MIT. Consulta [LICENSE](LICENSE) para más detalles.  
