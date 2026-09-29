@@ -286,6 +286,10 @@ class SecFinancialExtractor:
 
         return df
 
+    def get_annual_financial_history(self, ticker: str, force: bool = False) -> pd.DataFrame:
+        """Alias para get_financial_history con period_type='annual'."""
+        return self.get_financial_history(ticker, period_type="annual", force=force)
+
     def get_company_name(self, ticker: str) -> str:
         """Obtiene el nombre oficial de la empresa registrado en la SEC."""
         try:

@@ -239,6 +239,7 @@ class TestValuationSuite:
             {"eps_diluted": 5.0, "total_revenue": 120_000_000, "stockholders_equity": 100_000_000, "operating_cash_flow": 30_000_000, "shares_diluted": 10_000_000},
         ])
         mock_extractor.get_annual_financial_history.return_value = df_mock
+        mock_extractor.get_financial_history.return_value = df_mock
         mock_portfolio_mgr.get_current_market_price.return_value = 85.0
 
         model = RelativeMultiplesValuation(extractor=mock_extractor, portfolio_mgr=mock_portfolio_mgr)

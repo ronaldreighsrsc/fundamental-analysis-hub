@@ -182,6 +182,7 @@ class PortfolioWebHandler(SimpleHTTPRequestHandler):
                 from src.valuation.pe_forward_valuation import PeForwardValuation
                 from src.valuation.dividend_discount_model import DividendDiscountModel
                 from src.valuation.reverse_dcf import ReverseDcfValuation
+                from src.valuation.relative_multiples import RelativeMultiplesValuation
 
                 result = {"ticker": ticker}
                 if model_type in ("all", "graham"):
@@ -220,9 +221,42 @@ class PortfolioWebHandler(SimpleHTTPRequestHandler):
                     except Exception as e:
                         result["reverse_dcf"] = {"error": str(e)}
 
+                if model_type in ("all", "relative", "multiples"):
+                    try:
+                        result["relative_multiples"] = RelativeMultiplesValuation().evaluate_ticker(ticker)
+                    except Exception as e:
+                        result["relative_multiples"] = {"error": str(e)}
+
                 self._send_json(result)
             except Exception as ex:
                 self._send_json({"error": f"Error al calcular valuaciones: {ex}"}, status=500)
+            return
+
+        elif path == "/api/moat":
+            ticker = query.get("ticker", [""])[0].strip().upper()
+            from src.analysis.moat_manager import MoatManager
+            moat_mgr = MoatManager()
+            if ticker:
+                info = moat_mgr.get_moat(ticker)
+                self._send_json({"ticker": ticker, "moat": info})
+            else:
+                self._send_json(moat_mgr.get_all_moats())
+            return
+
+        elif path == "/api/research-report":
+            ticker = query.get("ticker", [""])[0].strip().upper()
+            if not ticker:
+                self._send_json({"error": "Ticker requerido"}, status=400)
+                return
+            try:
+                from src.analysis.research_report_generator import ResearchReportGenerator
+                gen = ResearchReportGenerator()
+                report_data = gen.generate_report_data(ticker)
+                markdown_doc = gen.generate_markdown_report(ticker)
+                report_data["markdown"] = markdown_doc
+                self._send_json(report_data)
+            except Exception as ex:
+                self._send_json({"error": f"Error generando reporte de research: {ex}"}, status=500)
             return
 
         # Servir archivos estaticos por defecto (index.html, style.css, app.js)

@@ -30,10 +30,16 @@ Plataforma profesional de análisis fundamental para **Value Investing**, con ex
   - Gráficos interactivos en HTML en modo oscuro profesional: Ingresos vs Beneficios, Calidad de Caja (FCF vs Net Income), Evolución de Márgenes y Dilución de Acciones.
 - **Simulador de Portafolio y Paper Trading Profesional ($100.000 USD)**:
   - Motor contable de libro mayor (event-sourcing ledger) con seguimiento estricto de transacciones, coste medio ponderado (WAC), P&L realizado vs no realizado, comisiones y dividendos.
-- **Web App: Broker & Trading Terminal Interactivo**:
-  - Interfaz web moderna estilo broker profesional con cotizaciones en tiempo real, ticket de órdenes con 1 clic, simulación de aportes DCA mensuales y gráficos interactivos contra el S&P 500.
+- **Generador de Reportes de Cobertura Institucional (Equity Research One-Pager)**:
+  - Generación automatizada de reportes de iniciación de cobertura en formato Markdown (`reports/`) listos para comités de inversión.
+  - Integra los 3 pilares: Resumen ejecutivo y recomendación formal (**BUY / HOLD / SELL**), calidad de negocio y Moat, escudo de solvencia y auditoría de dilución por SBC, y matriz comparativa de los 7 modelos de valuación con consenso de *Fair Value*.
+  - Reportes de muestra pregenerados: `reports/AAPL_Equity_Research_Report.md`, `reports/KO_Equity_Research_Report.md`, y `reports/DVA_Equity_Research_Report.md`.
+- **Web App: Terminal Dual (Trading Desk & Research Fundamental)**:
+  - Conmutador de vista en tiempo real entre:
+    1. **Trading Desk & Portafolio PME**: Seguimiento contable con alpha contra el S&P 500, HHI y gestión de órdenes.
+    2. **Terminal de Equity Research & Valuación (3 Pilares)**: Búsqueda instantánea de cualquier ticker (`AAPL`, `KO`, `DVA`, etc.) con tarjetas visuales de Moat, solvencia, dilución y matriz interactiva de los 7 modelos de valuación.
 - **Suite de Pruebas Automatizadas (Pytest)**:
-  - **59 tests unitarios** que cubren el 100% de la lógica contable, analizadores de activos, extractores de la SEC, API web y la suite de 7 modelos de valuación.
+  - **62 tests unitarios** que cubren el 100% de la lógica contable, analizadores de activos, extractores de la SEC, API web, generador de research y la suite completa de valuación.
 
 ---
 
@@ -43,7 +49,7 @@ Plataforma profesional de análisis fundamental para **Value Investing**, con ex
 - **Fuentes de Datos**: SEC EDGAR API (10-K y 10-Q públicos), Yahoo Finance API, FRED Federal Reserve Economic Data
 - **Cálculo y Modelado**: pandas, numpy, scipy / bisect
 - **Visualización**: Rich (tablas y dashboards para terminal), Plotly (gráficos web interactivos en modo oscuro)
-- **Testing**: pytest (56 tests unitarios automatizados)
+- **Testing**: pytest (62 tests unitarios automatizados - 100% pass rate)
 - **Arquitectura**: Principios SOLID, Factory Pattern, Event Sourcing Ledger, Arquitectura Modular y REST API
 
 ---

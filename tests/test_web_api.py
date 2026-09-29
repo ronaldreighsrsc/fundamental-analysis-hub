@@ -260,3 +260,39 @@ def test_api_sec_financials(web_server_instance):
     assert "shares_basic" in first_item
 
 
+def test_api_valuation_and_multiples(web_server_instance):
+    base_url, _ = web_server_instance
+    req = urllib.request.urlopen(f"{base_url}/api/valuation?ticker=AAPL")
+    assert req.status == 200
+    data = json.loads(req.read().decode("utf-8"))
+    assert data["ticker"] == "AAPL"
+    assert "graham" in data
+    assert "dcf" in data
+    assert "pe_forward" in data
+    assert "relative_multiples" in data
+    assert "peg_analysis" in data["relative_multiples"]
+
+
+def test_api_moat(web_server_instance):
+    base_url, _ = web_server_instance
+    req = urllib.request.urlopen(f"{base_url}/api/moat?ticker=AAPL")
+    assert req.status == 200
+    data = json.loads(req.read().decode("utf-8"))
+    assert data["ticker"] == "AAPL"
+    assert "moat" in data
+
+
+def test_api_research_report(web_server_instance):
+    base_url, _ = web_server_instance
+    req = urllib.request.urlopen(f"{base_url}/api/research-report?ticker=AAPL")
+    assert req.status == 200
+    data = json.loads(req.read().decode("utf-8"))
+    assert data["ticker"] == "AAPL"
+    assert "consensus" in data
+    assert "fair_value" in data["consensus"]
+    assert "recommendation" in data["consensus"]
+    assert "markdown" in data
+    assert "EQUITY RESEARCH INITIATING COVERAGE REPORT" in data["markdown"]
+
+
+

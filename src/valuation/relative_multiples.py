@@ -305,7 +305,7 @@ class RelativeMultiplesValuation:
         Evalúa un ticker completo extrayendo sus fundamentales de SEC y precios de mercado.
         """
         ticker_clean = ticker.strip().upper()
-        df_hist = self.extractor.get_annual_financial_history(ticker_clean)
+        df_hist = self.extractor.get_financial_history(ticker_clean, period_type="annual")
         
         if df_hist.empty:
             raise ValueError(f"No se encontraron estados financieros anuales en SEC para {ticker_clean}")
