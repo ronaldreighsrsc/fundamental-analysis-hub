@@ -131,6 +131,41 @@ def sample_sec_facts():
                             {"form": "10-K", "fy": 2019, "val": 1.22, "start": "2019-01-01", "end": "2019-12-31", "filed": "2020-02-15"}
                         ]
                     }
+                },
+                "AssetsCurrent": {
+                    "units": {
+                        "USD": [
+                            {"form": "10-K", "fy": 2018, "val": 20_000_000, "end": "2018-12-31", "filed": "2019-02-15"}
+                        ]
+                    }
+                },
+                "LiabilitiesCurrent": {
+                    "units": {
+                        "USD": [
+                            {"form": "10-K", "fy": 2018, "val": 10_000_000, "end": "2018-12-31", "filed": "2019-02-15"}
+                        ]
+                    }
+                },
+                "CashAndCashEquivalentsAtCarryingValue": {
+                    "units": {
+                        "USD": [
+                            {"form": "10-K", "fy": 2018, "val": 15_000_000, "end": "2018-12-31", "filed": "2019-02-15"}
+                        ]
+                    }
+                },
+                "LongTermDebt": {
+                    "units": {
+                        "USD": [
+                            {"form": "10-K", "fy": 2018, "val": 5_000_000, "end": "2018-12-31", "filed": "2019-02-15"}
+                        ]
+                    }
+                },
+                "InterestExpense": {
+                    "units": {
+                        "USD": [
+                            {"form": "10-K", "fy": 2018, "val": 1_000_000, "start": "2018-01-01", "end": "2018-12-31", "filed": "2019-02-15"}
+                        ]
+                    }
                 }
             }
         }
@@ -223,3 +258,24 @@ def test_sec_downloader_cik_formatting(tmp_path):
     # Debe retornar 10 digitos con ceros a la izquierda
     assert cik == "0000320193"
     assert len(cik) == 10
+
+
+def test_sec_extractor_solvency_and_interest_coverage(sample_sec_facts):
+    mock_downloader = MagicMock()
+    mock_downloader.fetch_company_facts.return_value = sample_sec_facts
+
+    extractor = SecFinancialExtractor(downloader=mock_downloader)
+    df = extractor.get_financial_history("ACME")
+
+    # Current Ratio: 20M / 10M = 2.0
+    assert "current_ratio" in df.columns
+    assert df.loc["2018", "current_ratio"] == 2.0
+
+    # Net Cash: 15M - 5M = 10M
+    assert "net_cash" in df.columns
+    assert df.loc["2018", "net_cash"] == 10_000_000
+
+    # Interest Coverage: 12M Operating Income / 1M Interest Expense = 12.0
+    assert "interest_coverage" in df.columns
+    assert df.loc["2018", "interest_coverage"] == 12.0
+

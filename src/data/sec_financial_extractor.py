@@ -80,6 +80,20 @@ class SecFinancialExtractor:
             "StockholdersEquity",
             "CommonStockholdersEquity",
         ],
+        "current_assets": [
+            "AssetsCurrent",
+        ],
+        "current_liabilities": [
+            "LiabilitiesCurrent",
+        ],
+        "total_liabilities": [
+            "Liabilities",
+        ],
+        "interest_expense": [
+            "InterestExpense",
+            "InterestAndDebtExpense",
+            "InterestExpenseDebt",
+        ],
     }
 
     def __init__(self, downloader: Optional[SecEdgarDownloader] = None):
@@ -255,6 +269,20 @@ class SecFinancialExtractor:
         if "capex" in df.columns and "operating_cash_flow" in df.columns:
             ocf = df["operating_cash_flow"].replace(0, np.nan)
             df["capex_to_ocf_pct"] = (df["capex"] / ocf) * 100
+
+        # Current Ratio (Liquidez Corriente = Current Assets / Current Liabilities)
+        if "current_assets" in df.columns and "current_liabilities" in df.columns:
+            cur_liab = df["current_liabilities"].replace(0, np.nan)
+            df["current_ratio"] = df["current_assets"] / cur_liab
+
+        # Posicion Neta de Caja (Cash & Equivalents - Total Debt)
+        if "cash" in df.columns and "total_debt" in df.columns:
+            df["net_cash"] = df["cash"] - df["total_debt"]
+
+        # Cobertura de Intereses (Operating Income / Interest Expense)
+        if "operating_income" in df.columns and "interest_expense" in df.columns:
+            int_exp = df["interest_expense"].replace(0, np.nan)
+            df["interest_coverage"] = df["operating_income"] / int_exp
 
         return df
 
