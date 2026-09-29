@@ -57,17 +57,21 @@ Plataforma profesional de análisis fundamental para **Value Investing**, con ex
 ## 📁 Estructura del Proyecto
 
 ```
-fundamental-analysis-hub/
+├── reports/                          # 📄 REPORTES INSTITUCIONALES DE EQUITY RESEARCH
+│   ├── AAPL_Equity_Research_Report.md# Iniciación de cobertura Apple Inc. (SELL)
+│   ├── KO_Equity_Research_Report.md  # Iniciación de cobertura The Coca-Cola Co. (HOLD)
+│   └── DVA_Equity_Research_Report.md # Iniciación de cobertura DaVita Inc. (BUY)
 ├── src/
 │   ├── data/
 │   │   ├── watchlist_manager.py       # CRUD de la watchlist
 │   │   ├── downloader.py             # Descarga y cache de Yahoo Finance
 │   │   ├── sec_edgar_downloader.py   # Cliente para la API publica de la SEC EDGAR
-│   │   └── sec_financial_extractor.py# Extractor de series 10-K/10-Q (EPS, Dilucion, FCF)
+│   │   └── sec_financial_extractor.py# Extractor de series 10-K/10-Q (EPS, Dilucion, FCF, Solvencia)
 │   ├── analysis/
 │   │   ├── base_analyzer.py          # Clase abstracta base (AssetAnalyzer)
 │   │   ├── equity_analyzer.py        # Analizador de acciones (rentabilidad, deuda, ownership)
 │   │   ├── moat_manager.py           # Gestor cualitativo de Moat y Tesis de Inversion
+│   │   ├── research_report_generator.py # 🎯 Generador institucional de reportes (3 Pilares)
 │   │   ├── reit_analyzer.py          # Analizador de REITs (FFO/AFFO)
 │   │   ├── etf_analyzer.py           # Analizadores de ETFs (equity y renta fija)
 │   │   └── analyzer_factory.py       # Factory Pattern
@@ -82,17 +86,18 @@ fundamental-analysis-hub/
 │   ├── portfolio/                    # Motor contable y simulador de portafolio
 │   │   ├── portfolio_manager.py      # Event-sourcing ledger (compras, ventas, WAC, P&L)
 │   │   └── portfolio_analytics.py    # Asignacion de activos, sectores e indice HHI
-│   ├── web/                          # Aplicacion Web Interactiva (Broker Terminal)
-│   │   ├── server.py                 # Servidor HTTP y API REST (Endpoints de Portafolio y Valuacion)
-│   │   └── static/                   # SPA: index.html, style.css, app.js
+│   ├── web/                          # Aplicacion Web Interactiva (Broker & Research Terminal)
+│   │   ├── server.py                 # Servidor HTTP y API REST (Endpoints de Portafolio, SEC, Moat y Valuacion)
+│   │   └── static/                   # SPA: index.html, style.css, app.js (Terminal Dual)
 │   ├── visualization/
 │   │   ├── financial_charts.py       # Dashboards en terminal y graficos Plotly (SEC y EPS)
 │   │   └── portfolio_charts.py       # Dashboards de portafolio en terminal y HTML Plotly
-│   ├── main_app.py                   # Lanza la aplicacion web del Broker
+│   ├── main_app.py                   # Lanza la aplicacion web del Broker & Research Terminal
 │   ├── main_data_update.py           # Descarga de datos de mercado
 │   ├── main_financial_history.py     # Historico 10-K/10-Q y graficos
 │   ├── main_analysis.py              # CLI principal: metricas, Moat y --valuation
-│   └── main_portfolio.py             # Simulador de portafolio y paper trading
+│   ├── main_portfolio.py             # Simulador de portafolio y paper trading
+│   └── main_research_report.py       # 🚀 CLI para generar reportes institucionales de cobertura
 ├── config/
 │   ├── watchlist.json                # Lista de activos bajo seguimiento
 │   └── moat_ratings.json             # Evaluaciones cualitativas de Moat
@@ -101,7 +106,7 @@ fundamental-analysis-hub/
 │   └── portfolio/                    # Ledger inmutable de transacciones
 ├── exports/
 │   └── charts/                       # Graficos interactivos HTML generados con Plotly
-├── tests/                            # 59 tests unitarios automatizados con pytest
+├── tests/                            # 62 tests unitarios automatizados con pytest
 │   ├── test_analyzers.py
 │   ├── test_moat_manager.py
 │   ├── test_portfolio.py
@@ -109,7 +114,8 @@ fundamental-analysis-hub/
 │   ├── test_valuation.py             # Tests para los 7 modelos de valuacion
 │   ├── test_visualization.py
 │   ├── test_watchlist_manager.py
-│   └── test_web_api.py
+│   └── test_web_api.py               # Tests para endpoints REST y reportes
+├── CAREER_PORTFOLIO_GUIDE.md         # 🎓 Guía de empleabilidad, LaTeX para CV y preguntas de entrevista
 ├── requirements.txt
 ├── .env.example
 └── README.md
@@ -215,7 +221,24 @@ python src/main_financial_history.py --ticker MSFT --years 10 --plot
 
 ---
 
-### 4. Terminal Web del Broker & Portafolio ($100.000 USD)
+### 4. Generador de Reportes Institucionales de Cobertura (Equity Research One-Pager)
+
+Genera de forma automatizada informes ejecutivos de iniciación de cobertura en formato Markdown (`reports/`), combinando los 3 pilares del análisis fundamental con recomendación formal (**BUY / HOLD / SELL**) y margen de seguridad:
+
+```powershell
+# Generar reporte de cobertura para Apple (AAPL)
+python src/main_research_report.py --ticker AAPL
+
+# Generar reporte para DaVita (DVA)
+python src/main_research_report.py --ticker DVA
+
+# Generar reportes para todos los activos en watchlist
+python src/main_research_report.py --all-watchlist
+```
+
+---
+
+### 5. Terminal Web Dual: Trading Desk & Research Fundamental ($100.000 USD)
 
 Inicia la aplicación web interactiva en modo oscuro:
 
@@ -223,14 +246,20 @@ Inicia la aplicación web interactiva en modo oscuro:
 python src/main_app.py
 ```
 Accede a `http://127.0.0.1:5000` para:
-- Ejecutar compras y ventas con cotizaciones en vivo.
-- Simular aportes mensuales DCA y monitorear el impacto de la disciplina de inversión.
-- Comparar el rendimiento de la cartera contra el S&P 500 (SPY).
-- Auditar el libro mayor de transacciones.
+- **Pestaña Trading Desk & Portafolio**:
+  - Ejecutar compras y ventas con cotizaciones en tiempo real.
+  - Simular aportes mensuales DCA y monitorear la disciplina de acumulación.
+  - Comparar el rendimiento de la cartera contra el S&P 500 (SPY) con cálculo de Alpha y PME.
+  - Auditar el libro mayor inmutable de transacciones.
+- **Pestaña Terminal de Research & Valuación (3 Pilares)**:
+  - Búsqueda instantánea de cualquier ticker (`AAPL`, `KO`, `DVA`, `MSFT`, `NVDA`, `GOOGL`).
+  - Tarjetas visuales de Foso Económico (Moat), Escudo de Solvencia y Detección de Dilución por Stock-Based Compensation.
+  - Matriz interactiva de los 7 modelos de valuación con semáforo de margen de seguridad.
+  - Botón de descarga directa del reporte de investigación en formato Markdown (`.md`).
 
 ---
 
-### 5. Simulador de Portafolio por Línea de Comandos
+### 6. Simulador de Portafolio por Línea de Comandos
 
 ```powershell
 # Ver estado del portafolio, posiciones y P&L
@@ -249,9 +278,9 @@ python src/main_portfolio.py --simulate-monthly 500 --months 6
 
 ---
 
-### 6. Suite de Pruebas Automatizadas (Pytest)
+### 7. Suite de Pruebas Automatizadas (Pytest)
 
-Ejecuta los **59 tests unitarios**:
+Ejecuta los **62 tests unitarios automatizados (100% pass rate)**:
 
 ```powershell
 pytest -v
@@ -259,6 +288,16 @@ pytest -v
 
 ---
 
+### 8. Recursos de Empleabilidad & Pitch de Entrevistas
+
+Para candidatos a puestos de **Trainee / Junior Financial Analyst, Equity Research o FinTech**, consulta el archivo [CAREER_PORTFOLIO_GUIDE.md](CAREER_PORTFOLIO_GUIDE.md), que incluye:
+- El código exacto en formato LaTeX listo para tu CV.
+- Textos de impacto para LinkedIn y portafolios de GitHub.
+- Playbook técnico con las 5 preguntas y respuestas clave de entrevista financiera (Reverse DCF, Dilución por SBC, Ajuste Graham FRED AAA, Heurísticas de Solvencia).
+
+---
+
 ## 📝 Licencia
 
 Este proyecto está bajo la Licencia MIT.
+
