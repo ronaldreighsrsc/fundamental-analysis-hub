@@ -15,6 +15,10 @@ Plataforma profesional de análisis fundamental para **Value Investing**, con ex
   - **Reverse DCF (Valuación Inversa)**: Solución numérica por bisección para descubrir la tasa de crecimiento de FCF que el precio actual descuenta en el mercado, comparada contra el crecimiento real histórico de la SEC.
 - **Histórico Financiero Multianual (10-K y 10-Q SEC EDGAR)**:
   - Extracción oficial y 100% gratuita de hasta 17+ años de estados financieros auditados desde la SEC EDGAR API pública.
+  - **Métricas de Solvencia y Salud Financiera (Módulos S08/S09)**:
+    - **Current Ratio**: $\frac{\text{Current Assets}}{\text{Current Liabilities}}$ para evaluar liquidez a corto plazo.
+    - **Prueba de Fuego de Solvencia / Net Cash**: Efectivo y equivalentes vs deuda total ($\text{Cash} - \text{Total Debt}$) para verificar inmunidad contra quiebra.
+    - **Interest Coverage Ratio**: Cobertura operativa de intereses ($\frac{\text{Operating Income}}{\text{Interest Expense}}$) para detectar riesgos de estrés financiero.
   - **Basic vs Diluted EPS**: Seguimiento del beneficio por acción básico vs diluido con evolución histórica.
   - **Acciones en Circulación (Basic vs Diluted Shares)**: Detección precisa de dilución de accionistas vs recompras de acciones (Stock-Based Compensation tracking).
 - **Análisis Cualitativo de Moat (Foso Económico)**:
@@ -29,7 +33,7 @@ Plataforma profesional de análisis fundamental para **Value Investing**, con ex
 - **Web App: Broker & Trading Terminal Interactivo**:
   - Interfaz web moderna estilo broker profesional con cotizaciones en tiempo real, ticket de órdenes con 1 clic, simulación de aportes DCA mensuales y gráficos interactivos contra el S&P 500.
 - **Suite de Pruebas Automatizadas (Pytest)**:
-  - **56 tests unitarios** que cubren el 100% de la lógica contable, analizadores de activos, extractores de la SEC, API web y la suite de modelos de valuación.
+  - **59 tests unitarios** que cubren el 100% de la lógica contable, analizadores de activos, extractores de la SEC, API web y la suite de 7 modelos de valuación.
 
 ---
 
@@ -91,7 +95,7 @@ fundamental-analysis-hub/
 │   └── portfolio/                    # Ledger inmutable de transacciones
 ├── exports/
 │   └── charts/                       # Graficos interactivos HTML generados con Plotly
-├── tests/                            # 57 tests unitarios automatizados con pytest
+├── tests/                            # 59 tests unitarios automatizados con pytest
 │   ├── test_analyzers.py
 │   ├── test_moat_manager.py
 │   ├── test_portfolio.py
@@ -241,7 +245,7 @@ python src/main_portfolio.py --simulate-monthly 500 --months 6
 
 ### 6. Suite de Pruebas Automatizadas (Pytest)
 
-Ejecuta los **56 tests unitarios**:
+Ejecuta los **59 tests unitarios**:
 
 ```powershell
 pytest -v
