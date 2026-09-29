@@ -474,6 +474,7 @@ def run_analysis():
             from src.valuation.pe_forward_valuation import PeForwardValuation
             from src.valuation.dividend_discount_model import DividendDiscountModel
             from src.valuation.reverse_dcf import ReverseDcfValuation
+            from src.valuation.relative_multiples import RelativeMultiplesValuation
 
             graham_mod = GrahamValuation()
             wacc_mod = WaccCalculator()
@@ -481,11 +482,12 @@ def run_analysis():
             pe_mod = PeForwardValuation()
             ddm_mod = DividendDiscountModel()
             rdcf_mod = ReverseDcfValuation()
+            rel_mod = RelativeMultiplesValuation()
 
             for ticker, analyzer in groups["equity"]:
                 console.print(Panel.fit(
-                    f"[bold cyan]SUITE DE VALUACIÓN INTRÍNSECA: {ticker}[/bold cyan]\n"
-                    "Modelos: Benjamin Graham, WACC/CAPM, DCF 5 Años, P/E Forward (Recompras/Dilución), DDM Gordon, Reverse DCF",
+                    f"[bold cyan]SUITE DE VALUACIÓN INTRÍNSECA Y RELATIVA: {ticker}[/bold cyan]\n"
+                    "Modelos: Benjamin Graham, WACC/CAPM, DCF 5 Años, P/E Forward (Recompras/Dilución), DDM Gordon, Reverse DCF, Múltiplos Relativos (PEG, P/E, P/S, P/B, P/CF)",
                     border_style="cyan"
                 ))
 
@@ -530,6 +532,13 @@ def run_analysis():
                     rdcf_mod.render_terminal_table(res_rdcf)
                 except Exception as erdcf:
                     console.print(f"[yellow]Aviso Reverse DCF ({ticker}): {erdcf}[/yellow]")
+
+                # 7. Múltiplos Relativos (PEG Lynch, P/E Reversión, P/S, P/B, P/CF)
+                try:
+                    res_rel = rel_mod.evaluate_ticker(ticker)
+                    rel_mod.render_terminal_table(res_rel)
+                except Exception as erel:
+                    console.print(f"[yellow]Aviso Múltiplos Relativos ({ticker}): {erel}[/yellow]")
 
     if groups.get("reit"):
         show_reit_table(groups["reit"])

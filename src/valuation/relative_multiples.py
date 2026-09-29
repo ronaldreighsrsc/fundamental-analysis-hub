@@ -7,37 +7,22 @@ from rich.panel import Panel
 console = Console()
 
 
+from src.data.sec_financial_extractor import SecFinancialExtractor
+from src.portfolio.portfolio_manager import PortfolioManager
+
 class RelativeMultiplesValuation:
     """
     Modelo de Valuación por Múltiplos Relativos y Comparables
     (Capítulo 2 y Capítulo 3 del curso 'Análisis Fundamental - Hecho Simple').
-    
-    Implementa:
-      1. El método 'Mi Favorita' (Lección S14_Como_Usar_El_PE_-_Mi_Favorita):
-         Valuación por reversión a la mediana histórica del P/E:
-         Precio Objetivo = Mediana_Historica_PE * EPS_Proyectado
-         
-      2. Ratio PEG de Peter Lynch (Lección S14_Anadimos_un_nuevo_ingrediente_El_Crecimiento):
-         PEG = PE / Tasa_Crecimiento_EPS (en %)
-         - PEG < 1.0: Infravalorada / Atractiva
-         - 1.0 <= PEG <= 1.5: Valoración Justa (Fair Value)
-         - PEG > 2.0: Sobrevalorada
-         
-      3. Valuación por P/S (Price to Sales) (Lección S15_PS):
-         Apropiado para empresas de alto crecimiento o etapas tempranas de monetización:
-         Precio Objetivo = Mediana_Historica_PS * Ventas_Por_Accion
-         
-      4. Valuación por P/B (Price to Book) (Lección S15_PB):
-         Apropiado para bancos, financieras y empresas de capital intensivo:
-         Precio Objetivo = Mediana_Historica_PB * Valor_En_Libros_Por_Accion
-         
-      5. Valuación por P/CF (Price to Cash Flow) (Lección S15_PCF):
-         Apropiado para empresas con alto gasto de depreciación/amortización no monetario:
-         Precio Objetivo = Mediana_Historica_PCF * Flujo_Caja_Operativo_Por_Accion
     """
 
-    def __init__(self):
-        pass
+    def __init__(
+        self,
+        extractor: Optional[SecFinancialExtractor] = None,
+        portfolio_mgr: Optional[PortfolioManager] = None,
+    ):
+        self.extractor = extractor or SecFinancialExtractor()
+        self.portfolio_mgr = portfolio_mgr or PortfolioManager()
 
     def calculate_peg_ratio(
         self,
@@ -310,3 +295,69 @@ class RelativeMultiplesValuation:
                 border_style="cyan"
             )
         )
+
+    def evaluate_ticker(
+        self,
+        ticker: str,
+        custom_growth_rate: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        """
+        Evalúa un ticker completo extrayendo sus fundamentales de SEC y precios de mercado.
+        """
+        ticker_clean = ticker.strip().upper()
+        df_hist = self.extractor.get_annual_financial_history(ticker_clean)
+        
+        if df_hist.empty:
+            raise ValueError(f"No se encontraron estados financieros anuales en SEC para {ticker_clean}")
+
+        latest = df_hist.iloc[-1]
+        shares = float(latest.get("shares_diluted", 0) or latest.get("shares_basic", 0))
+        if shares <= 0:
+            shares = 1.0
+
+        eps = float(latest.get("eps_diluted", 0) or latest.get("eps_basic", 0))
+        revenue = float(latest.get("total_revenue", 0))
+        equity = float(latest.get("stockholders_equity", 0))
+        ocf = float(latest.get("operating_cash_flow", 0))
+
+        rev_per_share = revenue / shares if shares > 0 else 0.0
+        bv_per_share = equity / shares if shares > 0 else 0.0
+        ocf_per_share = ocf / shares if shares > 0 else 0.0
+
+        # Crecimiento estimado
+        growth_rate = custom_growth_rate
+        if growth_rate is None:
+            eps_series = df_hist["eps_diluted"].dropna() if "eps_diluted" in df_hist.columns else df_hist["eps_basic"].dropna()
+            eps_pos = eps_series[eps_series > 0]
+            if len(eps_pos) >= 3:
+                years = min(5, len(eps_pos) - 1)
+                s_eps = eps_pos.iloc[-(years + 1)]
+                e_eps = eps_pos.iloc[-1]
+                if s_eps > 0 and e_eps > 0:
+                    cagr = ((e_eps / s_eps) ** (1 / years) - 1) * 100
+                    growth_rate = max(2.0, min(cagr, 25.0))
+                else:
+                    growth_rate = 8.0
+            else:
+                growth_rate = 8.0
+
+        current_price = self.portfolio_mgr.get_current_market_price(ticker_clean)
+        if not current_price or current_price <= 0:
+            current_price = eps * 15.0 if eps > 0 else 100.0
+
+        res = self.comprehensive_relative_valuation(
+            current_price=float(current_price),
+            eps=eps,
+            revenue_per_share=rev_per_share,
+            book_value_per_share=bv_per_share,
+            ocf_per_share=ocf_per_share,
+            expected_eps_growth_pct=float(growth_rate),
+        )
+        res["ticker"] = ticker_clean
+        return res
+
+    def render_terminal_table(self, res: Dict[str, Any]) -> None:
+        """Alias compatible con el estándar de suites del hub."""
+        ticker = res.get("ticker", "TICKER")
+        self.print_summary_table(ticker, res)
+

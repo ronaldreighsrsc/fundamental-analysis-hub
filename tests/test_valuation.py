@@ -223,3 +223,29 @@ class TestValuationSuite:
         assert comp["composite_multiples_fair_value"] == 102.5
         assert comp["composite_upside_pct"] == 2.5
         assert comp["composite_signal"] == "HOLD"
+
+    def test_relative_multiples_evaluate_ticker(self):
+        """Verifica la ejecución de evaluate_ticker con datos de extractor y portfolio manager."""
+        from unittest.mock import MagicMock
+        import pandas as pd
+        from src.valuation.relative_multiples import RelativeMultiplesValuation
+
+        mock_extractor = MagicMock()
+        mock_portfolio_mgr = MagicMock()
+
+        df_mock = pd.DataFrame([
+            {"eps_diluted": 4.0, "total_revenue": 100_000_000, "stockholders_equity": 80_000_000, "operating_cash_flow": 25_000_000, "shares_diluted": 10_000_000},
+            {"eps_diluted": 4.5, "total_revenue": 110_000_000, "stockholders_equity": 90_000_000, "operating_cash_flow": 28_000_000, "shares_diluted": 10_000_000},
+            {"eps_diluted": 5.0, "total_revenue": 120_000_000, "stockholders_equity": 100_000_000, "operating_cash_flow": 30_000_000, "shares_diluted": 10_000_000},
+        ])
+        mock_extractor.get_annual_financial_history.return_value = df_mock
+        mock_portfolio_mgr.get_current_market_price.return_value = 85.0
+
+        model = RelativeMultiplesValuation(extractor=mock_extractor, portfolio_mgr=mock_portfolio_mgr)
+        res = model.evaluate_ticker("KO")
+
+        assert res["ticker"] == "KO"
+        assert res["current_price"] == 85.0
+        assert res["composite_multiples_fair_value"] > 0
+        assert res["composite_signal"] in ["BUY", "HOLD", "SELL"]
+
