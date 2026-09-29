@@ -1,5 +1,12 @@
 # 📊 Fundamental Analysis Hub
 
+[![Python 3.12](https://img.shields.io/badge/Python-3.12%2B-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
+[![SEC EDGAR API](https://img.shields.io/badge/SEC%20EDGAR-10--K%20%2F%2010--Q%20US--GAAP-003366.svg)](https://www.sec.gov/edgar)
+[![FRED API](https://img.shields.io/badge/FRED%20API-Corporate%20AAA%20Yield-1A5276.svg)](https://fred.stlouisfed.org/)
+[![Clean Architecture](https://img.shields.io/badge/Architecture-SOLID%20%2B%20Factory%20Pattern-brightgreen.svg)](https://blog.cleancoder.com/)
+[![Tests](https://img.shields.io/badge/Tests-62%20Passed%20(100%25)-success.svg)](https://docs.pytest.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Plataforma profesional de análisis fundamental para **Value Investing**, con extracción automatizada de datos contables auditados de la SEC (10-K y 10-Q), suite completa de **Modelos de Valuación de Valor Intrínseco**, clasificación inteligente de activos (OOP/SOLID), análisis cualitativo de Moat, motor contable de Portafolio y Terminal Web interactivo.
 
 ---
@@ -297,7 +304,8 @@ Para candidatos a puestos de **Trainee / Junior Financial Analyst, Equity Resear
 
 ---
 
-## 📝 Licencia
+## 📜 Licencia
 
-Este proyecto está bajo la Licencia MIT.
+Distribuido bajo la Licencia MIT. Consulta [LICENSE](LICENSE) para más detalles.  
+**Desarrollado por Ronald Solares** (Ingeniero Civil Industrial — Data, Quantitative Finance & Equity Research).
 
