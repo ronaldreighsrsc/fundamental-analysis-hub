@@ -237,3 +237,26 @@ def test_api_dividend_calendar(web_server_instance):
     assert "portfolio_dividend_yield_pct" in data
     assert "monthly_projections" in data
 
+
+def test_api_sec_financials(web_server_instance):
+    base_url, _ = web_server_instance
+    # Probar endpoint sin ticker (debe retornar 400)
+    import urllib.error
+    with pytest.raises(urllib.error.HTTPError) as exc_info:
+        urllib.request.urlopen(f"{base_url}/api/sec-financials")
+    assert exc_info.value.code == 400
+
+    # Probar con ticker AAPL (usando cache local)
+    req = urllib.request.urlopen(f"{base_url}/api/sec-financials?ticker=AAPL")
+    assert req.status == 200
+    data = json.loads(req.read().decode("utf-8"))
+    assert data["ticker"] == "AAPL"
+    assert "history" in data
+    assert len(data["history"]) > 0
+    first_item = data["history"][-1]
+    assert "eps_diluted" in first_item
+    assert "shares_diluted" in first_item
+    assert "eps_basic" in first_item
+    assert "shares_basic" in first_item
+
+

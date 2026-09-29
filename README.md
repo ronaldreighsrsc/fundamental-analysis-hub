@@ -1,35 +1,50 @@
 # 📊 Fundamental Analysis Hub
 
-Plataforma de analisis fundamental para value investing, con descarga automatizada de datos financieros, clasificacion inteligente de activos y metricas clave por tipo de instrumento.
+Plataforma profesional de análisis fundamental para **Value Investing**, con extracción automatizada de datos contables auditados de la SEC (10-K y 10-Q), suite completa de **Modelos de Valuación de Valor Intrínseco**, clasificación inteligente de activos (OOP/SOLID), análisis cualitativo de Moat, motor contable de Portafolio y Terminal Web interactivo.
+
+---
 
 ## 🎯 Features
 
-- **Watchlist Manual** — Lista de activos configurada manualmente en `config/watchlist.json` (en el futuro se integrara un screener automatizado como Finviz).
-- **Clasificacion de Activos (OOP/SOLID)** — Cada activo se clasifica por tipo (`equity`, `reit`, `equity_etf`, `bond_etf`) y se analiza con las metricas que le corresponden.
-- **Descarga y Cache de Datos** — Datos financieros descargados de Yahoo Finance y almacenados localmente en `data/cache/` con validez temporal de 24 horas.
-- **Analisis de Metricas Clave** — Dashboard en terminal que muestra P/E, ROE, Margenes, Dividend Yield, Payout Ratio, FFO (REITs), Expense Ratio (ETFs), y mas.
-- **Analisis Cualitativo de Moat (Foso Economico)** — Evaluacion de ventajas competitivas duraderas basada en las 5 fuentes clasicas (Costes de cambio, Activos intangibles/Regulatorios, Efectos de red, Ventajas de costes y Escala eficiente), con tesis del inversor y amenazas de disrupcion.
-- **Perspectiva de Inversores (Skin in the Game & Smart Money)** — Monitoreo de alineacion accionaria (% de directivos e insiders) y participacion de fondos institucionales, manteniendo un calculo independiente del valor intrinseco (sin sesgo de analistas ni cortos).
-- **Historico Financiero Multianual (10-K y 10-Q SEC)** — Extraccion oficial y 100% gratuita de 10 a 17+ anios de estados financieros auditados directamente desde la SEC EDGAR API publica (ventas, beneficio neto, FCF, margenes historicos y recompras de acciones), sin pagar suscripciones a plataformas privadas.
-- **Dashboards Graficos Interactivos (Plotly)** — Generacion automatica de graficos en HTML en modo oscuro profesional con subplots de ingresos vs beneficios, calidad de caja (FCF vs Net Income), evolucion del foso a traves de margenes y dilucion de acciones.
-- **Simulador de Portafolio y Paper Trading Profesional** — Motor contable de libro mayor (event-sourcing ledger) para auditar y simular inversiones con capital inicial ($100.000 USD por defecto, simulando brokers como Fintual, Interactive Brokers o Schwab). Seguimiento estricto de transacciones, coste medio ponderado (WAC), P&L realizado vs no realizado, comisiones y dividendos.
-- **Web App: Broker & Trading Terminal Interactivo** — Aplicación web moderna en modo oscuro con cotizaciones en tiempo real, ticket de órdenes para comprar y vender con 1 clic, simulación de aportes mensuales DCA y gráficos interactivos de evolución contra el S&P 500.
-- **Analisis y Concentracion de Cartera** — Evaluacion automatica de asignacion de capital (% acciones, % REITs, % ETFs, % efectivo), exposicion sectorial y calculo del Indice Herfindahl-Hirschman (HHI) para medir concentracion del riesgo.
-- **Dashboards Visuales de Portafolio (Plotly + Rich)** — Monitor integral en terminal con tablas formateadas y generacion de dashboards interactivos HTML con donas de asset allocation, distribucion sectorial y barras de rendimiento por activo.
-- **Suite de Pruebas Automatizadas (Pytest)** — 39 tests unitarios que garantizan la integridad de la logica contable del portafolio, clasificadores de activos, analisis de estados financieros, extraccion de la SEC y endpoints de la API web.
-- **Intrinsic Value Calculator** (Planned) — DCF, Graham Formula, y multiplos comparables.
-- **Margin of Safety** (Planned) — Comparacion visual de precio de mercado vs. valor intrinseco.
+- **Suite Completa de Modelos de Valuación de Valor Intrínseco (Fern Finance / Wall Street)**:
+  - **Benjamin Graham Formula**: Fórmula clásica 1962 ($EPS \times (8.5 + 2g)$), fórmula revisada 1974 vinculada en tiempo real a los rendimientos de bonos corporativos AAA de la Reserva Federal (FRED API serie `AAA`), y variante conservadora ($7 + 1g$).
+  - **WACC Calculator (Costo de Capital Ponderado)**: Costo de deuda antes y después de impuestos, Costo de Equity mediante CAPM ($R_f + \beta \times ERP$), y ponderaciones óptimas de estructura de capital ($W_d, W_e$).
+  - **Multi-Stage DCF (Descuento de Flujos de Caja)**: Modelo a 5 años enlazado a los márgenes auditados de la SEC (Margen de Flujo Operativo, Margen de CapEx, FCF), valor terminal perpetuo Gordon Growth al 2.5% y cálculo de Margen de Seguridad.
+  - **Forward P/E Projection Model**: Proyección a 5 años de ventas, margen de beneficio neto, **tasa de dilución o recompras de acciones (Buybacks)** libre de distorsiones por splits, Forward EPS, P/E terminal y tasa de retorno compuesto anual (CAGR).
+  - **Dividend Discount Model (DDM)**: Modelo de Gordon Growth ($V = \frac{D_1}{r - g}$) enlazado al historial de dividendos de Yahoo Finance con validación de singularidad ($r > g$).
+  - **Reverse DCF (Valuación Inversa)**: Solución numérica por bisección para descubrir la tasa de crecimiento de FCF que el precio actual descuenta en el mercado, comparada contra el crecimiento real histórico de la SEC.
+- **Histórico Financiero Multianual (10-K y 10-Q SEC EDGAR)**:
+  - Extracción oficial y 100% gratuita de hasta 17+ años de estados financieros auditados desde la SEC EDGAR API pública.
+  - **Basic vs Diluted EPS**: Seguimiento del beneficio por acción básico vs diluido con evolución histórica.
+  - **Acciones en Circulación (Basic vs Diluted Shares)**: Detección precisa de dilución de accionistas vs recompras de acciones (Stock-Based Compensation tracking).
+- **Análisis Cualitativo de Moat (Foso Económico)**:
+  - Evaluación de ventajas competitivas duraderas basada en las 5 fuentes clásicas (Costes de cambio, Activos intangibles/Regulatorios, Efectos de red, Ventajas de costes y Escala eficiente).
+  - Registro de tesis de inversión y monitoreo de riesgos de disrupción.
+- **Perspectiva de Inversores (Skin in the Game & Smart Money)**:
+  - Monitoreo de alineación accionaria (% directivos e insiders) y participación institucional.
+- **Dashboards Gráficos Interactivos (Plotly)**:
+  - Gráficos interactivos en HTML en modo oscuro profesional: Ingresos vs Beneficios, Calidad de Caja (FCF vs Net Income), Evolución de Márgenes y Dilución de Acciones.
+- **Simulador de Portafolio y Paper Trading Profesional ($100.000 USD)**:
+  - Motor contable de libro mayor (event-sourcing ledger) con seguimiento estricto de transacciones, coste medio ponderado (WAC), P&L realizado vs no realizado, comisiones y dividendos.
+- **Web App: Broker & Trading Terminal Interactivo**:
+  - Interfaz web moderna estilo broker profesional con cotizaciones en tiempo real, ticket de órdenes con 1 clic, simulación de aportes DCA mensuales y gráficos interactivos contra el S&P 500.
+- **Suite de Pruebas Automatizadas (Pytest)**:
+  - **56 tests unitarios** que cubren el 100% de la lógica contable, analizadores de activos, extractores de la SEC, API web y la suite de modelos de valuación.
+
+---
 
 ## 🛠️ Tech Stack
 
-- **Language**: Python 3.12+, HTML5, Vanilla CSS, Vanilla JavaScript (SPA)
-- **Data Sources**: yfinance, SEC EDGAR API (public 10-K & 10-Q filings)
-- **Analysis**: pandas, numpy
-- **Visualization**: rich (terminal), plotly (interactive dark mode web charts)
-- **Testing**: pytest
-- **Architecture**: OOP con principios SOLID, Factory Pattern, Event Sourcing Ledger, RESTful API
+- **Lenguaje**: Python 3.12+, HTML5, Vanilla CSS, Vanilla JavaScript (SPA)
+- **Fuentes de Datos**: SEC EDGAR API (10-K y 10-Q públicos), Yahoo Finance API, FRED Federal Reserve Economic Data
+- **Cálculo y Modelado**: pandas, numpy, scipy / bisect
+- **Visualización**: Rich (tablas y dashboards para terminal), Plotly (gráficos web interactivos en modo oscuro)
+- **Testing**: pytest (56 tests unitarios automatizados)
+- **Arquitectura**: Principios SOLID, Factory Pattern, Event Sourcing Ledger, Arquitectura Modular y REST API
 
-## 📁 Project Structure
+---
+
+## 📁 Estructura del Proyecto
 
 ```
 fundamental-analysis-hub/
@@ -38,177 +53,197 @@ fundamental-analysis-hub/
 │   │   ├── watchlist_manager.py       # CRUD de la watchlist
 │   │   ├── downloader.py             # Descarga y cache de Yahoo Finance
 │   │   ├── sec_edgar_downloader.py   # Cliente para la API publica de la SEC EDGAR
-│   │   └── sec_financial_extractor.py# Extractor de series contables 10-K y 10-Q
+│   │   └── sec_financial_extractor.py# Extractor de series 10-K/10-Q (EPS, Dilucion, FCF)
 │   ├── analysis/
 │   │   ├── base_analyzer.py          # Clase abstracta base (AssetAnalyzer)
-│   │   ├── equity_analyzer.py        # Analizador para acciones (rentabilidad, deuda, ownership)
+│   │   ├── equity_analyzer.py        # Analizador de acciones (rentabilidad, deuda, ownership)
 │   │   ├── moat_manager.py           # Gestor cualitativo de Moat y Tesis de Inversion
-│   │   ├── reit_analyzer.py          # Analizador para REITs (FFO/AFFO)
-│   │   ├── etf_analyzer.py           # Analizadores para ETFs (equity + bonds)
+│   │   ├── reit_analyzer.py          # Analizador de REITs (FFO/AFFO)
+│   │   ├── etf_analyzer.py           # Analizadores de ETFs (equity y renta fija)
 │   │   └── analyzer_factory.py       # Factory Pattern
+│   ├── valuation/                    # 🎯 SUITE DE VALUACION DE VALOR INTRINSECO
+│   │   ├── graham_valuation.py       # Graham 1962, Revised 1974 (FRED AAA Yield) y Conservador
+│   │   ├── wacc_calculator.py        # WACC, Cost of Debt (after-tax), CAPM Cost of Equity
+│   │   ├── dcf_valuation.py          # Multi-Stage DCF a 5 anos con margenes SEC y Gordon Growth
+│   │   ├── pe_forward_valuation.py   # Forward P/E a 5 anos con Buybacks / Dilucion y CAGR
+│   │   ├── dividend_discount_model.py# Gordon Growth Dividend Discount Model (DDM)
+│   │   └── reverse_dcf.py            # Valuacion Inversa (Crecimiento Implicito vs SEC CAGR)
 │   ├── portfolio/                    # Motor contable y simulador de portafolio
 │   │   ├── portfolio_manager.py      # Event-sourcing ledger (compras, ventas, WAC, P&L)
 │   │   └── portfolio_analytics.py    # Asignacion de activos, sectores e indice HHI
 │   ├── web/                          # Aplicacion Web Interactiva (Broker Terminal)
-│   │   ├── server.py                 # Servidor HTTP y API REST en Python
+│   │   ├── server.py                 # Servidor HTTP y API REST (Endpoints de Portafolio y Valuacion)
 │   │   └── static/                   # SPA: index.html, style.css, app.js
-│   ├── valuation/                    # (Planned) Modelos de valoracion
 │   ├── visualization/
-│   │   ├── financial_charts.py       # Renderizado en terminal y graficos Plotly (SEC)
+│   │   ├── financial_charts.py       # Dashboards en terminal y graficos Plotly (SEC y EPS)
 │   │   └── portfolio_charts.py       # Dashboards de portafolio en terminal y HTML Plotly
-│   ├── main_app.py                   # Orquestador: lanza la aplicacion web del Broker
-│   ├── main_data_update.py           # Orquestador: descarga de datos de mercado
-│   ├── main_financial_history.py     # Orquestador: historico 10-K/10-Q y graficos
-│   ├── main_analysis.py              # Orquestador: visualizacion de metricas y CLI
-│   └── main_portfolio.py             # Orquestador: simulador de portafolio y paper trading
+│   ├── main_app.py                   # Lanza la aplicacion web del Broker
+│   ├── main_data_update.py           # Descarga de datos de mercado
+│   ├── main_financial_history.py     # Historico 10-K/10-Q y graficos
+│   ├── main_analysis.py              # CLI principal: metricas, Moat y --valuation
+│   └── main_portfolio.py             # Simulador de portafolio y paper trading
 ├── config/
-│   ├── watchlist.json                # Lista manual de activos bajo seguimiento
-│   └── moat_ratings.json             # Evaluaciones y tesis cualitativas de Moat
+│   ├── watchlist.json                # Lista de activos bajo seguimiento
+│   └── moat_ratings.json             # Evaluaciones cualitativas de Moat
 ├── data/
 │   ├── cache/                        # Cache local de fundamentales, precios y SEC
-│   └── portfolio/                    # Ledger inmutable de transacciones y configuracion
+│   └── portfolio/                    # Ledger inmutable de transacciones
 ├── exports/
 │   └── charts/                       # Graficos interactivos HTML generados con Plotly
-├── tests/                            # 39 tests unitarios automatizados con pytest
-├── notebooks/
+├── tests/                            # 56 tests unitarios automatizados con pytest
+│   ├── test_analyzers.py
+│   ├── test_moat_manager.py
+│   ├── test_portfolio.py
+│   ├── test_sec_extractor.py
+│   ├── test_valuation.py             # Tests para los 6 modelos de valuacion
+│   ├── test_visualization.py
+│   ├── test_watchlist_manager.py
+│   └── test_web_api.py
 ├── requirements.txt
 ├── .env.example
 └── README.md
 ```
 
-## 🚀 Getting Started
+---
+
+## 🚀 Instalación y Puesta en Marcha
 
 ```powershell
 # 1. Clonar el repositorio
 git clone https://github.com/ronaldreighsrsc/fundamental-analysis-hub.git
 
-# 2. Crear el entorno virtual (usando py en Windows)
+# 2. Crear el entorno virtual en Windows
 py -m venv venv
 
-# 3. Activar el entorno virtual en Windows:
-# En PowerShell (Editor por defecto en VS Code):
+# 3. Activar el entorno virtual:
 .\venv\Scripts\Activate.ps1
 # O en CMD:
 venv\Scripts\activate
-# O en Git Bash / Linux / Mac:
-source venv/Scripts/activate
 
 # 4. Instalar las dependencias
 pip install -r requirements.txt
 
 # 5. Probar que todo funciona correctamente
 python verify_setup.py
-
-# 6. Configurar variables de entorno
-copy .env.example .env
-# Luego edita el archivo .env con tus credenciales
 ```
 
-## 📊 Uso
+---
 
-### 0. Aplicacion Web Interactiva: Broker & Trading Terminal (¡Recomendado!)
-La forma mas visual, interactiva y real de operar tu portafolio (estilo Fintual / Interactive Brokers), con cotizaciones en vivo, ticket de ordenes y graficos en tiempo real:
+## 💡 Guía de Uso
+
+### 1. Modelos de Valuación de Valor Intrínseco (`--valuation`)
+Ejecuta la suite completa de valuación sobre cualquier ticker, generando paneles enriquecidos en consola con señales de inversión (`BUY`, `SELL`, `COMPRAR`, `VENDER`):
+
+```powershell
+# Ejecutar los 6 modelos de valuacion sobre Apple
+python src/main_analysis.py --ticker AAPL --valuation
+
+# Ejecutar sobre DaVita
+python src/main_analysis.py --ticker DVA --valuation
+```
+
+#### Modelos incluidos en el reporte:
+1. **Fórmula de Graham**:
+   - Clásico 1962: $V = \frac{EPS \times (8.5 + 2g) \times 4.4}{Y}$
+   - Conservador: $V = \frac{EPS \times (7 + 1g) \times 4.4}{Y}$
+   - Rendimiento del bono corporativo AAA obtenido de FRED.
+2. **WACC (Costo Promedio Ponderado de Capital)**:
+   - Tasa libre de riesgo (US 10Y Treasury).
+   - Costo de Equity mediante CAPM: $R_f + \beta \times (R_m - R_f)$.
+   - Costo de deuda After-Tax: $\frac{\text{Intereses}}{\text{Deuda}} \times (1 - \text{Tax Rate})$.
+3. **Multi-Stage DCF (5 Años)**:
+   - Proyecciones de Free Cash Flow basadas en el margen operativo y margen CapEx históricos de la SEC.
+   - Valor Terminal con crecimiento perpetuo al 2.5%.
+   - Cálculo del Margen de Seguridad vs precio de mercado.
+4. **Modelo Forward P/E (5 Años)**:
+   - Crecimiento de ingresos proyectado.
+   - Margen de beneficio neto histórico.
+   - **Tasa anual de recompra o dilución de acciones**.
+   - Forward EPS proyectado y precio objetivo a 5 años según múltiplo terminal de salida.
+5. **Dividend Discount Model (DDM)**:
+   - Tasa de crecimiento de dividendos histórica (CAGR).
+   - Tasa de retorno requerida y valor justo por Gordon Growth.
+6. **Reverse DCF (Valuación Inversa)**:
+   - Revela el crecimiento anual de FCF que el precio actual del mercado descuenta.
+   - Diagnóstico del riesgo de expectativas vs el crecimiento contable real auditado.
+
+---
+
+### 2. API REST de Valuación
+
+La plataforma expone endpoints JSON para integración con interfaces web o herramientas externas:
+
+```bash
+# Consultar todos los modelos de valuacion para un ticker
+curl "http://localhost:8000/api/valuation?ticker=AAPL&model=all"
+
+# Consultar un modelo especifico (graham, wacc, dcf, pe, ddm, reverse)
+curl "http://localhost:8000/api/valuation?ticker=AAPL&model=graham"
+curl "http://localhost:8000/api/valuation?ticker=AAPL&model=dcf"
+curl "http://localhost:8000/api/valuation?ticker=AAPL&model=reverse"
+```
+
+---
+
+### 3. Histórico Financiero SEC (10-K / 10-Q) y Métricas de Dilución
+
+```powershell
+# Tabla evolutiva con Basic/Diluted EPS y Shares Outstanding
+python src/main_financial_history.py --ticker AAPL
+
+# Abrir dashboard interactivo en modo oscuro con Plotly
+python src/main_financial_history.py --ticker AAPL --plot
+
+# Ver ultimos 10 anos auditados
+python src/main_financial_history.py --ticker MSFT --years 10 --plot
+```
+
+---
+
+### 4. Terminal Web del Broker & Portafolio ($100.000 USD)
+
+Inicia la aplicación web interactiva en modo oscuro:
+
 ```powershell
 python src/main_app.py
 ```
-Abre automaticamente tu navegador en `http://127.0.0.1:5000` con:
-- **Ticket de Ordenes:** Compra y venta con cotizaciones en vivo al escribir el ticker.
-- **Aportes DCA:** Registro de depositos mensuales de $500 y evaluacion de impacto temporal.
-- **Graficos en Vivo:** Evolucion de Cartera vs Aportes Acumulados vs S&P 500 (SPY).
-- **Libro Mayor:** Auditoria completa de cada transaccion con tus notas de tesis de inversion.
+Accede a `http://127.0.0.1:5000` para:
+- Ejecutar compras y ventas con cotizaciones en vivo.
+- Simular aportes mensuales DCA y monitorear el impacto de la disciplina de inversión.
+- Comparar el rendimiento de la cartera contra el S&P 500 (SPY).
+- Auditar el libro mayor de transacciones.
 
-### 1. Actualizar datos financieros
-Descarga los estados financieros y precios historicos de todos los activos en la watchlist.
+---
+
+### 5. Simulador de Portafolio por Línea de Comandos
+
 ```powershell
-python src/main_data_update.py           # Usa cache si tiene menos de 24h
-python src/main_data_update.py --force   # Fuerza re-descarga desde Yahoo Finance
-```
-
-### 2. Ver metricas fundamentales y Moat
-Muestra tablas de metricas clave agrupadas por tipo de activo, estructura de inversores y evaluacion cualitativa de ventajas competitivas.
-```powershell
-python src/main_analysis.py              # Resumen general de la watchlist
-python src/main_analysis.py --ticker DVA # Analisis individual con ficha completa de Moat
-python src/main_analysis.py --moat       # Resumen general + reporte cualitativo de Moat
-python src/main_analysis.py --ticker DVA --history  # Con tabla historica multianual (10-K)
-python src/main_analysis.py --ticker DVA --plot     # Abre dashboard interactivo Plotly
-```
-
-### 3. Historico Financiero Multianual y Graficos Interactivos (10-K / 10-Q SEC)
-Extrae hasta 15+ anios de estados financieros auditados directamente desde la base publica de la SEC (EDGAR), sin pagar suscripciones a plataformas privadas.
-```powershell
-# Tabla evolutiva en terminal (Ventas, Margenes, FCF, Crecimiento YoY y barra visual)
-python src/main_financial_history.py --ticker DVA
-
-# Abrir dashboard interactivo en modo oscuro con Plotly en el navegador
-python src/main_financial_history.py --ticker DVA --plot
-
-# Ver ultimos 10 anios de una empresa
-python src/main_financial_history.py --ticker AAPL --years 10 --plot
-
-# Ver evolucion trimestral (10-Q)
-python src/main_financial_history.py --ticker MSFT --period quarterly
-```
-
-### 4. Simulador de Portafolio y Paper Trading ($100.000 USD)
-Motor de libro mayor contable (event-sourcing ledger) para auditar y simular inversiones en condiciones reales de mercado (simulando brokers como Fintual, Interactive Brokers o Charles Schwab):
-```powershell
-# Ver resumen del portafolio (NAV total, caja disponible, posiciones abiertas, coste base WAC y P&L no realizado)
+# Ver estado del portafolio, posiciones y P&L
 python src/main_portfolio.py
 
-# Abrir dashboard visual interactivo con comparativa contra S&P 500 (SPY) y desacople de aportes
-python src/main_portfolio.py --plot
-python src/main_portfolio.py --plot --benchmark SPY
-
-# Simular compra de acciones (ej: 50 acciones de DaVita a $148.50)
+# Simular compra
 python src/main_portfolio.py --buy --ticker DVA --shares 50 --price 148.50 --fee 1.50 --notes "Tesis Moat Duopolio"
 
-# Simular venta con calculo automatico de P&L realizado (ej: vender 20 acciones de DVA a $165.00)
-python src/main_portfolio.py --sell --ticker DVA --shares 20 --price 165.00 --fee 1.50 --notes "Toma parcial de beneficios"
+# Simular venta
+python src/main_portfolio.py --sell --ticker DVA --shares 20 --price 165.00 --fee 1.50 --notes "Toma de beneficios"
 
-# Registrar aportes mensuales en tiempo real o simular serie historica DCA
-python src/main_portfolio.py --deposit 500.00 --notes "Aporte mensual septiembre"
-python src/main_portfolio.py --simulate-monthly 500 --months 6 --notes "Aporte sistematico DCA"
-
-# Registrar cobro de dividendos o retiros de capital
-python src/main_portfolio.py --dividend --ticker AAPL --price 45.00 --notes "Dividendo Q3"
-
-# Ver historial completo de transacciones auditadas
-python src/main_portfolio.py --history
-
-# Exportar historial a CSV para analisis en Excel o Power BI
-python src/main_portfolio.py --export-csv
-
-# Crear copia de seguridad portable (JSON) para transferir a otro PC o migrar
-python src/main_portfolio.py --backup
-
-# Restaurar portafolio desde un archivo de respaldo JSON
-python src/main_portfolio.py --restore exports/backups/portfolio_backup_YYYYMMDD_HHMMSS.json
-
-# Reiniciar simulador a los $100.000 USD iniciales
-python src/main_portfolio.py --reset
+# Aportes mensuales DCA
+python src/main_portfolio.py --deposit 500.00 --notes "Aporte mensual"
+python src/main_portfolio.py --simulate-monthly 500 --months 6
 ```
 
-### 5. Configurar la watchlist y tesis de Moat
-- **Watchlist (`config/watchlist.json`):** Edita manualmente para agregar o quitar activos (`ticker`, `name`, `sector`, `type`).
-- **Tesis de Moat (`config/moat_ratings.json`):** Documenta para cada empresa su calificacion (`Wide`, `Narrow`, `None`), tendencia, fuentes activas de foso (costes de cambio, regulatorios, efectos de red, etc.), tesis cualitativa y riesgos de disrupcion.
+---
 
-Tipos soportados en la watchlist:
-| Tipo | Descripcion | Ejemplo |
-|---|---|---|
-| `equity` | Acciones individuales | AAPL, MSFT, DVA, KO |
-| `reit` | REITs (evaluados con FFO/AFFO) | O |
-| `equity_etf` | ETFs de renta variable | JEPI, SCHD, VNQ |
-| `bond_etf` | ETFs de renta fija | TLT, IEF, SHY |
+### 6. Suite de Pruebas Automatizadas (Pytest)
 
-### 6. Ejecutar pruebas unitarias (Pytest)
-El proyecto cuenta con 33 tests unitarios automatizados que cubren el ledger contable, el analizador de estados financieros, los extractores SEC, benchmarks PME y los gestores de moat:
+Ejecuta los **56 tests unitarios**:
+
 ```powershell
 pytest -v
 ```
 
-## 📝 License
+---
 
-MIT License
+## 📝 Licencia
 
-
+Este proyecto está bajo la Licencia MIT.

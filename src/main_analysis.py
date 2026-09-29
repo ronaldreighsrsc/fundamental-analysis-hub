@@ -385,6 +385,7 @@ def run_analysis():
     parser.add_argument("--moat", action="store_true", help="Mostrar analisis cualitativo detallado de Moat y Tesis")
     parser.add_argument("--history", action="store_true", help="Muestra la tabla de estados financieros multianuales (10-K SEC)")
     parser.add_argument("--plot", action="store_true", help="Genera y abre el grafico interactivo Plotly en el navegador")
+    parser.add_argument("--valuation", action="store_true", help="Calcula la suite de valuacion intrinseca (Graham, WACC, DCF, Multiplos P/E con dilucion, DDM, Reverse DCF)")
     args = parser.parse_args()
 
     console.print(Panel.fit(
@@ -464,6 +465,71 @@ def run_analysis():
                         console.print(f"[bold green]Grafico interactivo de {ticker} generado en: {chart_p}[/bold green]\n")
                 except Exception as ex:
                     console.print(f"[yellow]No se pudo cargar historico SEC para {ticker}: {ex}[/yellow]")
+
+        # Si se activo --valuation, ejecutar suite de modelos de valuacion intrinseca
+        if args.valuation and groups.get("equity"):
+            from src.valuation.graham_valuation import GrahamValuation
+            from src.valuation.wacc_calculator import WaccCalculator
+            from src.valuation.dcf_valuation import DcfValuation
+            from src.valuation.pe_forward_valuation import PeForwardValuation
+            from src.valuation.dividend_discount_model import DividendDiscountModel
+            from src.valuation.reverse_dcf import ReverseDcfValuation
+
+            graham_mod = GrahamValuation()
+            wacc_mod = WaccCalculator()
+            dcf_mod = DcfValuation()
+            pe_mod = PeForwardValuation()
+            ddm_mod = DividendDiscountModel()
+            rdcf_mod = ReverseDcfValuation()
+
+            for ticker, analyzer in groups["equity"]:
+                console.print(Panel.fit(
+                    f"[bold cyan]SUITE DE VALUACIÓN INTRÍNSECA: {ticker}[/bold cyan]\n"
+                    "Modelos: Benjamin Graham, WACC/CAPM, DCF 5 Años, P/E Forward (Recompras/Dilución), DDM Gordon, Reverse DCF",
+                    border_style="cyan"
+                ))
+
+                # 1. Graham
+                try:
+                    res_g = graham_mod.evaluate_ticker(ticker)
+                    graham_mod.render_terminal_table(res_g)
+                except Exception as eg:
+                    console.print(f"[yellow]Aviso Graham ({ticker}): {eg}[/yellow]")
+
+                # 2. WACC
+                try:
+                    res_w = wacc_mod.evaluate_ticker(ticker)
+                    wacc_mod.render_terminal_table(res_w)
+                except Exception as ew:
+                    console.print(f"[yellow]Aviso WACC ({ticker}): {ew}[/yellow]")
+
+                # 3. DCF
+                try:
+                    res_dcf = dcf_mod.evaluate_ticker(ticker)
+                    dcf_mod.render_terminal_table(res_dcf)
+                except Exception as ed:
+                    console.print(f"[yellow]Aviso DCF ({ticker}): {ed}[/yellow]")
+
+                # 4. Forward P/E (dilution & buybacks aware)
+                try:
+                    res_pe = pe_mod.evaluate_ticker(ticker)
+                    pe_mod.render_terminal_table(res_pe)
+                except Exception as ep:
+                    console.print(f"[yellow]Aviso Forward P/E ({ticker}): {ep}[/yellow]")
+
+                # 5. DDM
+                try:
+                    res_ddm = ddm_mod.evaluate_ticker(ticker)
+                    ddm_mod.render_terminal_table(res_ddm)
+                except Exception as eddm:
+                    console.print(f"[yellow]Aviso DDM ({ticker}): {eddm}[/yellow]")
+
+                # 6. Reverse DCF
+                try:
+                    res_rdcf = rdcf_mod.evaluate_ticker(ticker)
+                    rdcf_mod.render_terminal_table(res_rdcf)
+                except Exception as erdcf:
+                    console.print(f"[yellow]Aviso Reverse DCF ({ticker}): {erdcf}[/yellow]")
 
     if groups.get("reit"):
         show_reit_table(groups["reit"])

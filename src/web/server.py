@@ -137,6 +137,94 @@ class PortfolioWebHandler(SimpleHTTPRequestHandler):
             self.wfile.write(content.encode("utf-8"))
             return
 
+        elif path == "/api/sec-financials":
+            ticker = query.get("ticker", [""])[0].strip().upper()
+            period = query.get("period", ["annual"])[0].strip().lower()
+            if not ticker:
+                self._send_json({"error": "Ticker requerido"}, status=400)
+                return
+            try:
+                import pandas as pd
+                import numpy as np
+                from src.data.sec_financial_extractor import SecFinancialExtractor
+                extractor = SecFinancialExtractor()
+                df = extractor.get_financial_history(ticker, period_type=period)
+                company_name = extractor.get_company_name(ticker)
+
+                history_records = []
+                for p_idx, row in df.iterrows():
+                    rec = {"period": str(p_idx)}
+                    for col in df.columns:
+                        val = row[col]
+                        rec[col] = None if pd.isna(val) else (float(val) if isinstance(val, (int, float, np.number)) else val)
+                    history_records.append(rec)
+
+                self._send_json({
+                    "ticker": ticker,
+                    "company_name": company_name,
+                    "period_type": period,
+                    "history": history_records,
+                })
+            except Exception as ex:
+                self._send_json({"error": f"Error al obtener historico SEC: {ex}"}, status=500)
+            return
+
+        elif path == "/api/valuation":
+            ticker = query.get("ticker", [""])[0].strip().upper()
+            model_type = query.get("model", ["all"])[0].strip().lower()
+            if not ticker:
+                self._send_json({"error": "Ticker requerido"}, status=400)
+                return
+            try:
+                from src.valuation.graham_valuation import GrahamValuation
+                from src.valuation.wacc_calculator import WaccCalculator
+                from src.valuation.dcf_valuation import DcfValuation
+                from src.valuation.pe_forward_valuation import PeForwardValuation
+                from src.valuation.dividend_discount_model import DividendDiscountModel
+                from src.valuation.reverse_dcf import ReverseDcfValuation
+
+                result = {"ticker": ticker}
+                if model_type in ("all", "graham"):
+                    try:
+                        result["graham"] = GrahamValuation().evaluate_ticker(ticker)
+                    except Exception as e:
+                        result["graham"] = {"error": str(e)}
+
+                if model_type in ("all", "wacc"):
+                    try:
+                        result["wacc"] = WaccCalculator().calculate_for_ticker(ticker)
+                    except Exception as e:
+                        result["wacc"] = {"error": str(e)}
+
+                if model_type in ("all", "dcf"):
+                    try:
+                        result["dcf"] = DcfValuation().evaluate_ticker(ticker)
+                    except Exception as e:
+                        result["dcf"] = {"error": str(e)}
+
+                if model_type in ("all", "pe"):
+                    try:
+                        result["pe_forward"] = PeForwardValuation().evaluate_ticker(ticker)
+                    except Exception as e:
+                        result["pe_forward"] = {"error": str(e)}
+
+                if model_type in ("all", "ddm"):
+                    try:
+                        result["ddm"] = DividendDiscountModel().evaluate_ticker(ticker)
+                    except Exception as e:
+                        result["ddm"] = {"error": str(e)}
+
+                if model_type in ("all", "reverse"):
+                    try:
+                        result["reverse_dcf"] = ReverseDcfValuation().evaluate_ticker(ticker)
+                    except Exception as e:
+                        result["reverse_dcf"] = {"error": str(e)}
+
+                self._send_json(result)
+            except Exception as ex:
+                self._send_json({"error": f"Error al calcular valuaciones: {ex}"}, status=500)
+            return
+
         # Servir archivos estaticos por defecto (index.html, style.css, app.js)
         if path == "/" or path == "":
             self.path = "/index.html"

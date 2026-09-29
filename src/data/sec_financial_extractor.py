@@ -46,13 +46,23 @@ class SecFinancialExtractor:
             "PaymentsToAcquireProductiveAssets",
             "PaymentsForPropertyPlantAndEquipment",
         ],
+        "shares_basic": [
+            "WeightedAverageNumberOfSharesOutstandingBasic",
+            "WeightedAverageNumberOfSharesBasic",
+            "CommonStockSharesOutstanding",
+        ],
         "shares_diluted": [
             "WeightedAverageNumberOfDilutedSharesOutstanding",
             "WeightedAverageNumberOfSharesOutstandingDiluted",
             "CommonStockSharesOutstanding",
         ],
+        "eps_basic": [
+            "EarningsPerShareBasic",
+            "EarningsPerShareBasicAndDiluted",
+        ],
         "eps_diluted": [
             "EarningsPerShareDiluted",
+            "EarningsPerShareBasicAndDiluted",
         ],
         "total_assets": [
             "Assets",
@@ -92,7 +102,14 @@ class SecFinancialExtractor:
 
             concept_data = us_gaap[tag]
             units_data = concept_data.get("units", {})
-            unit_entries = units_data.get("USD") or units_data.get("shares") or []
+            # Buscar el conjunto de unidades con mayor riqueza de datos
+            unit_candidates = ["USD", "USD/shares", "shares", "USD/share", "pure"]
+            unit_entries = []
+            for u_key in unit_candidates:
+                if u_key in units_data and len(units_data[u_key]) > len(unit_entries):
+                    unit_entries = units_data[u_key]
+            if not unit_entries and units_data:
+                unit_entries = next(iter(units_data.values()))
 
             for item in unit_entries:
                 form = item.get("form", "")
@@ -143,6 +160,17 @@ class SecFinancialExtractor:
                     fp = item.get("fp", "")
                     fy = item.get("fy")
                     if fy and fp in ("Q1", "Q2", "Q3"):
+                        # Si tiene duracion de fechas, filtrar para el trimestre (~65 a 105 dias)
+                        if start_str and end_str:
+                            try:
+                                start = datetime.strptime(start_str, "%Y-%m-%d")
+                                end = datetime.strptime(end_str, "%Y-%m-%d")
+                                days = (end - start).days
+                                if not (65 <= days <= 105):
+                                    continue
+                            except Exception:
+                                pass
+
                         period_key = f"{fy}-{fp}"
                         existing = entries_by_period.get(period_key)
                         if not existing or filed_date > existing["filed"]:
@@ -204,8 +232,24 @@ class SecFinancialExtractor:
             df["net_income_growth_yoy"] = df["net_income"].pct_change() * 100
         if "free_cash_flow" in df.columns:
             df["fcf_growth_yoy"] = df["free_cash_flow"].pct_change() * 100
+
+        # Crecimiento de EPS (Basic y Diluted)
+        if "eps_basic" in df.columns:
+            df["eps_basic_growth_yoy"] = df["eps_basic"].pct_change() * 100
+        if "eps_diluted" in df.columns:
+            df["eps_diluted_growth_yoy"] = df["eps_diluted"].pct_change() * 100
+
+        # Evolucion de Acciones (Basic y Diluted)
+        if "shares_basic" in df.columns:
+            df["shares_basic_change_yoy"] = df["shares_basic"].pct_change() * 100
         if "shares_diluted" in df.columns:
-            df["shares_change_yoy"] = df["shares_diluted"].pct_change() * 100
+            df["shares_diluted_change_yoy"] = df["shares_diluted"].pct_change() * 100
+            df["shares_change_yoy"] = df["shares_diluted_change_yoy"]
+
+        # Spread de dilucion por opciones/RSUs (% adicional de acciones por dilucion)
+        if "shares_basic" in df.columns and "shares_diluted" in df.columns:
+            basic_s = df["shares_basic"].replace(0, np.nan)
+            df["dilution_spread_pct"] = ((df["shares_diluted"] - df["shares_basic"]) / basic_s) * 100
 
         # Intensidad de Capital (CapEx / Operating Cash Flow %)
         if "capex" in df.columns and "operating_cash_flow" in df.columns:

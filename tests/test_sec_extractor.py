@@ -96,12 +96,39 @@ def sample_sec_facts():
                         ]
                     }
                 },
+                "WeightedAverageNumberOfSharesOutstandingBasic": {
+                    "units": {
+                        "shares": [
+                            {"form": "10-K", "fy": 2017, "val": 9_800_000, "start": "2017-01-01", "end": "2017-12-31", "filed": "2018-02-15"},
+                            {"form": "10-K", "fy": 2018, "val": 9_400_000, "start": "2018-01-01", "end": "2018-12-31", "filed": "2019-02-15"},
+                            {"form": "10-K", "fy": 2019, "val": 8_900_000, "start": "2019-01-01", "end": "2019-12-31", "filed": "2020-02-15"}
+                        ]
+                    }
+                },
                 "WeightedAverageNumberOfDilutedSharesOutstanding": {
                     "units": {
                         "shares": [
-                            {"form": "10-K", "fy": 2017, "val": 10_000_000, "end": "2017-12-31", "filed": "2018-02-15"},
-                            {"form": "10-K", "fy": 2018, "val": 9_500_000, "end": "2018-12-31", "filed": "2019-02-15"},
-                            {"form": "10-K", "fy": 2019, "val": 9_000_000, "end": "2019-12-31", "filed": "2020-02-15"}
+                            {"form": "10-K", "fy": 2017, "val": 10_000_000, "start": "2017-01-01", "end": "2017-12-31", "filed": "2018-02-15"},
+                            {"form": "10-K", "fy": 2018, "val": 9_500_000, "start": "2018-01-01", "end": "2018-12-31", "filed": "2019-02-15"},
+                            {"form": "10-K", "fy": 2019, "val": 9_000_000, "start": "2019-01-01", "end": "2019-12-31", "filed": "2020-02-15"}
+                        ]
+                    }
+                },
+                "EarningsPerShareBasic": {
+                    "units": {
+                        "USD/shares": [
+                            {"form": "10-K", "fy": 2017, "val": 0.77, "start": "2017-01-01", "end": "2017-12-31", "filed": "2018-02-15"},
+                            {"form": "10-K", "fy": 2018, "val": 0.96, "start": "2018-01-01", "end": "2018-12-31", "filed": "2019-02-15"},
+                            {"form": "10-K", "fy": 2019, "val": 1.24, "start": "2019-01-01", "end": "2019-12-31", "filed": "2020-02-15"}
+                        ]
+                    }
+                },
+                "EarningsPerShareDiluted": {
+                    "units": {
+                        "USD/shares": [
+                            {"form": "10-K", "fy": 2017, "val": 0.75, "start": "2017-01-01", "end": "2017-12-31", "filed": "2018-02-15"},
+                            {"form": "10-K", "fy": 2018, "val": 0.95, "start": "2018-01-01", "end": "2018-12-31", "filed": "2019-02-15"},
+                            {"form": "10-K", "fy": 2019, "val": 1.22, "start": "2019-01-01", "end": "2019-12-31", "filed": "2020-02-15"}
                         ]
                     }
                 }
@@ -147,6 +174,40 @@ def test_sec_extractor_derived_metrics(sample_sec_facts):
     # Reduccion de acciones (Recompras de acciones / Buybacks):
     # 2018: 9.5M vs 10M = -5.0%
     assert round(df.loc["2018", "shares_change_yoy"], 1) == -5.0
+
+
+def test_sec_extractor_eps_and_shares(sample_sec_facts):
+    mock_downloader = MagicMock()
+    mock_downloader.fetch_company_facts.return_value = sample_sec_facts
+
+    extractor = SecFinancialExtractor(downloader=mock_downloader)
+    df = extractor.get_financial_history("ACME")
+
+    # Verificacion de existencia de columnas
+    assert "eps_basic" in df.columns
+    assert "eps_diluted" in df.columns
+    assert "shares_basic" in df.columns
+    assert "shares_diluted" in df.columns
+
+    # Valores extraidos
+    assert df.loc["2018", "eps_basic"] == 0.96
+    assert df.loc["2018", "eps_diluted"] == 0.95
+    assert df.loc["2018", "shares_basic"] == 9_400_000
+    assert df.loc["2018", "shares_diluted"] == 9_500_000
+
+    # Crecimiento de EPS (2018 vs 2017: (0.95 - 0.75) / 0.75 = 26.67%)
+    assert round(df.loc["2018", "eps_diluted_growth_yoy"], 1) == 26.7
+    assert round(df.loc["2018", "eps_basic_growth_yoy"], 1) == 24.7
+
+    # Variacion de acciones
+    # Basic: (9.4 - 9.8) / 9.8 = -4.08%
+    assert round(df.loc["2018", "shares_basic_change_yoy"], 1) == -4.1
+    # Diluted: (9.5 - 10.0) / 10.0 = -5.0%
+    assert round(df.loc["2018", "shares_diluted_change_yoy"], 1) == -5.0
+
+    # Spread de dilucion: (9.5M - 9.4M) / 9.4M = 1.06%
+    assert round(df.loc["2018", "dilution_spread_pct"], 2) == 1.06
+
 
 
 def test_sec_downloader_cik_formatting(tmp_path):
