@@ -67,7 +67,8 @@ fundamental-analysis-hub/
 │   │   ├── dcf_valuation.py          # Multi-Stage DCF a 5 anos con margenes SEC y Gordon Growth
 │   │   ├── pe_forward_valuation.py   # Forward P/E a 5 anos con Buybacks / Dilucion y CAGR
 │   │   ├── dividend_discount_model.py# Gordon Growth Dividend Discount Model (DDM)
-│   │   └── reverse_dcf.py            # Valuacion Inversa (Crecimiento Implicito vs SEC CAGR)
+│   │   ├── reverse_dcf.py            # Valuacion Inversa (Crecimiento Implicito vs SEC CAGR)
+│   │   └── relative_multiples.py     # Multiplos Relativos (PEG Peter Lynch, P/E Mi Favorita, P/S, P/B, P/CF)
 │   ├── portfolio/                    # Motor contable y simulador de portafolio
 │   │   ├── portfolio_manager.py      # Event-sourcing ledger (compras, ventas, WAC, P&L)
 │   │   └── portfolio_analytics.py    # Asignacion de activos, sectores e indice HHI
@@ -90,12 +91,12 @@ fundamental-analysis-hub/
 │   └── portfolio/                    # Ledger inmutable de transacciones
 ├── exports/
 │   └── charts/                       # Graficos interactivos HTML generados con Plotly
-├── tests/                            # 56 tests unitarios automatizados con pytest
+├── tests/                            # 57 tests unitarios automatizados con pytest
 │   ├── test_analyzers.py
 │   ├── test_moat_manager.py
 │   ├── test_portfolio.py
 │   ├── test_sec_extractor.py
-│   ├── test_valuation.py             # Tests para los 6 modelos de valuacion
+│   ├── test_valuation.py             # Tests para los 7 modelos de valuacion
 │   ├── test_visualization.py
 │   ├── test_watchlist_manager.py
 │   └── test_web_api.py
@@ -166,6 +167,10 @@ python src/main_analysis.py --ticker DVA --valuation
 6. **Reverse DCF (Valuación Inversa)**:
    - Revela el crecimiento anual de FCF que el precio actual del mercado descuenta.
    - Diagnóstico del riesgo de expectativas vs el crecimiento contable real auditado.
+7. **Múltiplos Relativos y Comparables (PEG, P/E Mi Favorita, P/S, P/B, P/CF)**:
+   - Ratio PEG de Peter Lynch ($PEG < 1.0$ infravalorada, $PEG > 2.0$ sobrevalorada).
+   - Método "Mi Favorita": precio objetivo por reversión a la mediana histórica del múltiplo P/E.
+   - Valoraciones específicas por Price-to-Sales (alto crecimiento), Price-to-Book (financieras/bancos) y Price-to-Cash-Flow.
 
 ---
 

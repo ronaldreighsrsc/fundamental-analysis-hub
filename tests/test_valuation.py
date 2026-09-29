@@ -171,3 +171,55 @@ class TestValuationSuite:
         assert calc["revised_value"] == 114.0
         # Conservadora: V = (4 * (7.0 + 1 * 10) * 4.4) / 4.4 = 4 * 17 = 68.0
         assert calc["conservative_value"] == 68.0
+
+    def test_relative_multiples_valuation(self):
+        """Verifica la valuación por múltiplos relativos (PEG, P/E Mi Favorita, P/S, P/B, P/CF)."""
+        from src.valuation.relative_multiples import RelativeMultiplesValuation
+        model = RelativeMultiplesValuation()
+
+        # 1. PEG Ratio
+        peg_buy = model.calculate_peg_ratio(current_pe=15.0, expected_growth_rate_pct=20.0)
+        assert peg_buy["peg_ratio"] == 0.75
+        assert peg_buy["signal"] == "BUY"
+
+        peg_sell = model.calculate_peg_ratio(current_pe=30.0, expected_growth_rate_pct=10.0)
+        assert peg_sell["peg_ratio"] == 3.0
+        assert peg_sell["signal"] == "SELL"
+
+        # 2. P/E 'Mi Favorita' (Mediana Histórica)
+        pe_res = model.calculate_pe_historical_fair_value(
+            expected_eps=5.0,
+            historical_pe_median=20.0,
+            current_price=80.0
+        )
+        assert pe_res["fair_value"] == 100.0
+        assert pe_res["upside_pct"] == 25.0
+        assert pe_res["signal"] == "BUY"
+
+        # 3. P/S Fair Value
+        ps_res = model.calculate_ps_fair_value(
+            revenue_per_share=25.0,
+            historical_ps_median=4.0,
+            current_price=100.0
+        )
+        assert ps_res["fair_value"] == 100.0
+        assert ps_res["upside_pct"] == 0.0
+        assert ps_res["signal"] == "HOLD"
+
+        # 4. Comprehensive Composite
+        comp = model.comprehensive_relative_valuation(
+            current_price=100.0,
+            eps=5.0,
+            revenue_per_share=30.0,
+            book_value_per_share=25.0,
+            ocf_per_share=8.0,
+            expected_eps_growth_pct=15.0,
+            historical_pe_median=20.0,  # target: 100
+            historical_ps_median=3.0,   # target: 90
+            historical_pb_median=4.0,   # target: 100
+            historical_pcf_median=15.0, # target: 120
+        )
+        # Promedio: (100 + 90 + 100 + 120) / 4 = 410 / 4 = 102.5
+        assert comp["composite_multiples_fair_value"] == 102.5
+        assert comp["composite_upside_pct"] == 2.5
+        assert comp["composite_signal"] == "HOLD"

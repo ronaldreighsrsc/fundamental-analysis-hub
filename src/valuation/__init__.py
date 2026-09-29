@@ -4,6 +4,7 @@ from src.valuation.dcf_valuation import DcfValuation
 from src.valuation.pe_forward_valuation import PeForwardValuation
 from src.valuation.dividend_discount_model import DividendDiscountModel
 from src.valuation.reverse_dcf import ReverseDcfValuation
+from src.valuation.relative_multiples import RelativeMultiplesValuation
 
 __all__ = [
     "GrahamValuation",
@@ -12,4 +13,5 @@ __all__ = [
     "PeForwardValuation",
     "DividendDiscountModel",
     "ReverseDcfValuation",
+    "RelativeMultiplesValuation",
 ]
