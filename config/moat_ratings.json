@@ -68,5 +68,29 @@
     ],
     "thesis": "Liderazgo global en productos farmacéuticos innovadores y dispositivos médicos (MedTech). Foso protegido por una vasta cartera de patentes, capacidades masivas de I+D y relaciones clínicas directas con hospitales y cirujanos en todo el mundo.",
     "threats": "Pérdida de exclusividad por vencimiento de patentes clave (cliff de patentes) y competencia de biosimilares, además de litigios legales prolongados."
+  },
+  "NVDA": {
+    "name": "NVIDIA Corporation",
+    "rating": "Wide",
+    "trend": "Stable",
+    "sources": [
+      "switching_costs",
+      "intangibles_regulatory",
+      "network_effects"
+    ],
+    "thesis": "Estándar de facto en infraestructura de cómputo acelerado e IA a escala de data center. Su foso real no es solo el silicio (arquitectura GPU/interconexión NVLink), sino el ecosistema cerrado de software CUDA con millones de desarrolladores, librerías optimizadas y costes de cambio masivos para hyperscalers y empresas.",
+    "threats": "Riesgo de concentración de clientes (hyperscalers desarrollando ASICs propios como TPU/Trainium), ciclicidad del CapEx en IA, restricciones regulatorias/exportación geopolítica (China/Taiwán-TSMC) y ruido de gobernanza por transición de liderazgo."
+  },
+  "NFLX": {
+    "name": "Netflix, Inc.",
+    "rating": "Wide",
+    "trend": "Increasing",
+    "sources": [
+      "efficient_scale",
+      "intangibles_regulatory",
+      "cost_advantages"
+    ],
+    "thesis": "Líder global de streaming por suscripción con escala rentable inigualable: amortiza un presupuesto de contenido global (~$17B+/año) sobre una base masiva de suscriptores pagos, generando apalancamiento operativo estructural (>30% margen operativo), fuerte conversión a FCF GAAP y expansión en publicidad (ad-tier) y eventos en vivo.",
+    "threats": "Competencia estructural por tiempo de pantalla frente al short video (YouTube, TikTok, Reels), saturación en mercados maduros (UCAN), inflación en derechos deportivos/eventos en vivo y sensibilidad al poder de fijación de precios ante desaceleración macro."
   }
 }

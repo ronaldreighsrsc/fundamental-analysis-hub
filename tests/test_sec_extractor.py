@@ -279,3 +279,66 @@ def test_sec_extractor_solvency_and_interest_coverage(sample_sec_facts):
     assert "interest_coverage" in df.columns
     assert df.loc["2018", "interest_coverage"] == 12.0
 
+
+def test_sec_extractor_separates_comparative_years_in_same_10k_filing():
+    """
+    Regresion: Un 10-K reporta 3 anios comparativos con el mismo `fy` y `filed`.
+    Cada entrada debe indexarse por la fecha real de cierre (`end`), no por `fy`,
+    evitando que el anio mas antiguo sobrescriba al mas reciente.
+    """
+    comparative_facts = {
+        "cik": 999999,
+        "entityName": "COMPARATIVE CORP",
+        "facts": {
+            "us-gaap": {
+                "Revenues": {
+                    "units": {
+                        "USD": [
+                            {"form": "10-K", "fy": 2025, "val": 33_700_000_000, "start": "2023-01-01", "end": "2023-12-31", "filed": "2026-01-23"},
+                            {"form": "10-K", "fy": 2025, "val": 39_000_000_000, "start": "2024-01-01", "end": "2024-12-31", "filed": "2026-01-23"},
+                            {"form": "10-K", "fy": 2025, "val": 45_200_000_000, "start": "2025-01-01", "end": "2025-12-31", "filed": "2026-01-23"},
+                        ]
+                    }
+                },
+                "CostOfRevenue": {
+                    "units": {
+                        "USD": [
+                            {"form": "10-K", "fy": 2025, "val": 23_200_000_000, "start": "2025-01-01", "end": "2025-12-31", "filed": "2026-01-23"},
+                        ]
+                    }
+                },
+                "GrossProfit": {
+                    "units": {
+                        "USD": [
+                            {"form": "10-K", "fy": 2023, "val": 14_000_000_000, "start": "2023-01-01", "end": "2023-12-31", "filed": "2024-01-26"},
+                        ]
+                    }
+                },
+                "CashAndCashEquivalentsAtCarryingValue": {
+                    "units": {
+                        "USD": [
+                            {"form": "10-K", "fy": 2025, "val": 7_800_000_000, "end": "2024-12-31", "filed": "2026-01-23"},
+                            {"form": "10-K", "fy": 2025, "val": 9_030_000_000, "end": "2025-12-31", "filed": "2026-01-23"},
+                        ]
+                    }
+                },
+            }
+        },
+    }
+    mock_downloader = MagicMock()
+    mock_downloader.fetch_company_facts.return_value = comparative_facts
+
+    extractor = SecFinancialExtractor(downloader=mock_downloader)
+    df = extractor.get_financial_history("COMP")
+
+    assert list(df.index) == ["2023", "2024", "2025"]
+    assert df.loc["2023", "revenue"] == 33_700_000_000
+    assert df.loc["2024", "revenue"] == 39_000_000_000
+    assert df.loc["2025", "revenue"] == 45_200_000_000
+    # Balance instantaneo de 2025 no debe quedar tapado por 2024
+    assert df.loc["2024", "cash"] == 7_800_000_000
+    assert df.loc["2025", "cash"] == 9_030_000_000
+    # Gross profit faltante en 2025 debe rellenarse parcialmente con revenue - cost_of_revenue
+    assert df.loc["2025", "gross_profit"] == 22_000_000_000
+
+

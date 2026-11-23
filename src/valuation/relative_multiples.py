@@ -316,7 +316,7 @@ class RelativeMultiplesValuation:
             shares = 1.0
 
         eps = float(latest.get("eps_diluted", 0) or latest.get("eps_basic", 0))
-        revenue = float(latest.get("total_revenue", 0))
+        revenue = float(latest.get("revenue", 0) or latest.get("total_revenue", 0))
         equity = float(latest.get("stockholders_equity", 0))
         ocf = float(latest.get("operating_cash_flow", 0))
 
@@ -324,12 +324,32 @@ class RelativeMultiplesValuation:
         bv_per_share = equity / shares if shares > 0 else 0.0
         ocf_per_share = ocf / shares if shares > 0 else 0.0
 
-        # Crecimiento estimado
+        # Crecimiento estimado (robusto ante stock splits historicos)
         growth_rate = custom_growth_rate
         if growth_rate is None:
             eps_series = df_hist["eps_diluted"].dropna() if "eps_diluted" in df_hist.columns else df_hist["eps_basic"].dropna()
             eps_pos = eps_series[eps_series > 0]
-            if len(eps_pos) >= 3:
+
+            # Detectar si hubo stock split en la ventana reciente (salto >40% en acciones en 1 anio)
+            has_split_jump = False
+            if "shares_diluted" in df_hist.columns:
+                sh_recent = df_hist["shares_diluted"].dropna().tail(6)
+                if len(sh_recent) >= 2:
+                    sh_pct = sh_recent.pct_change().dropna().abs()
+                    has_split_jump = bool((sh_pct >= 0.40).any())
+
+            if has_split_jump and "net_income" in df_hist.columns:
+                ni_pos = df_hist["net_income"].dropna()
+                ni_pos = ni_pos[ni_pos > 0]
+                if len(ni_pos) >= 3:
+                    years = min(5, len(ni_pos) - 1)
+                    s_ni = ni_pos.iloc[-(years + 1)]
+                    e_ni = ni_pos.iloc[-1]
+                    cagr = ((e_ni / s_ni) ** (1 / years) - 1) * 100
+                    growth_rate = max(2.0, min(cagr, 25.0))
+                else:
+                    growth_rate = 8.0
+            elif len(eps_pos) >= 3:
                 years = min(5, len(eps_pos) - 1)
                 s_eps = eps_pos.iloc[-(years + 1)]
                 e_eps = eps_pos.iloc[-1]

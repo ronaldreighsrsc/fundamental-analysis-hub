@@ -171,14 +171,25 @@ class ReverseDcfValuation:
             perpetual_growth=custom_perpetual_growth or self.DEFAULT_PERPETUAL_GROWTH,
         )
 
-        # Comparativa con crecimiento histórico real
+        # Comparativa con crecimiento histórico real (usando el primer FCF positivo si el inicio fue negativo)
         hist_years = min(len(df), 5)
         recent_df = df.tail(hist_years)
         hist_fcf_growth = 0.0
         if "free_cash_flow" in recent_df.columns:
             fcf_s = recent_df["free_cash_flow"].dropna()
-            if len(fcf_s) >= 2 and fcf_s.iloc[0] > 0 and fcf_s.iloc[-1] > 0:
-                hist_fcf_growth = float(((fcf_s.iloc[-1] / fcf_s.iloc[0]) ** (1.0 / (len(fcf_s) - 1)) - 1.0) * 100)
+            if len(fcf_s) >= 2 and fcf_s.iloc[-1] > 0:
+                if fcf_s.iloc[0] > 0:
+                    start_val, span = fcf_s.iloc[0], len(fcf_s) - 1
+                else:
+                    pos_idx = [i for i, v in enumerate(fcf_s.values) if v > 0]
+                    if len(pos_idx) >= 2:
+                        first_pos = pos_idx[0]
+                        start_val = fcf_s.iloc[first_pos]
+                        span = (len(fcf_s) - 1) - first_pos
+                    else:
+                        start_val, span = 0.0, 0
+                if start_val > 0 and span >= 1:
+                    hist_fcf_growth = float(((fcf_s.iloc[-1] / start_val) ** (1.0 / span) - 1.0) * 100)
 
         res["ticker"] = ticker.upper()
         res["company_name"] = self.extractor.get_company_name(ticker)

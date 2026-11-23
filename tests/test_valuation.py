@@ -250,3 +250,84 @@ class TestValuationSuite:
         assert res["composite_multiples_fair_value"] > 0
         assert res["composite_signal"] in ["BUY", "HOLD", "SELL"]
 
+    def test_relative_multiples_reads_sec_revenue_column_and_handles_split(self):
+        """
+        Regresion: SecFinancialExtractor expone la columna `revenue` (no `total_revenue`),
+        por lo que P/S no debe quedar en 0.0. Ademas, un stock split 10:1 no debe colapsar
+        el crecimiento de EPS al piso de 2.0%.
+        """
+        from src.valuation.relative_multiples import RelativeMultiplesValuation
+
+        mock_extractor = MagicMock()
+        mock_portfolio_mgr = MagicMock()
+
+        # Simula split 10:1 entre 2023 y 2024, con crecimiento real de EPS del ~20%/anio
+        df_mock = pd.DataFrame([
+            {"eps_diluted": 10.0, "revenue": 30_000_000_000, "net_income": 4_500_000_000, "stockholders_equity": 20_000_000_000, "operating_cash_flow": 7_000_000_000, "shares_diluted": 450_000_000},
+            {"eps_diluted": 12.0, "revenue": 36_000_000_000, "net_income": 5_400_000_000, "stockholders_equity": 22_000_000_000, "operating_cash_flow": 8_000_000_000, "shares_diluted": 445_000_000},
+            {"eps_diluted": 1.45, "revenue": 42_000_000_000, "net_income": 6_400_000_000, "stockholders_equity": 25_000_000_000, "operating_cash_flow": 9_500_000_000, "shares_diluted": 4_400_000_000},
+            {"eps_diluted": 1.80, "revenue": 48_000_000_000, "net_income": 7_700_000_000, "stockholders_equity": 28_000_000_000, "operating_cash_flow": 11_000_000_000, "shares_diluted": 4_300_000_000},
+        ], index=["2022", "2023", "2024", "2025"])
+        mock_extractor.get_financial_history.return_value = df_mock
+        mock_portfolio_mgr.get_current_market_price.return_value = 50.0
+
+        model = RelativeMultiplesValuation(extractor=mock_extractor, portfolio_mgr=mock_portfolio_mgr)
+        res = model.evaluate_ticker("SPLITCO")
+
+        assert res["ps_method"]["fair_value"] > 0
+        assert res["ps_method"]["signal"] != "AVOID"
+        assert res["peg_analysis"]["expected_growth_rate_pct"] > 10.0
+
+    def test_pe_forward_ignores_stock_split_when_estimating_buyback_rate(self):
+        """
+        Regresion: Un split 10:1 en shares_diluted no debe interpretarse como +6% de dilucion;
+        debe capturar las recompras netas reales (-2% anual).
+        """
+        mock_extractor = MagicMock()
+        mock_portfolio_mgr = MagicMock()
+
+        df_mock = pd.DataFrame([
+            {"revenue": 31_000_000_000, "net_income": 4_500_000_000, "shares_diluted": 450_000_000},
+            {"revenue": 34_000_000_000, "net_income": 5_400_000_000, "shares_diluted": 441_000_000},
+            {"revenue": 39_000_000_000, "net_income": 8_700_000_000, "shares_diluted": 4_320_000_000},
+            {"revenue": 45_000_000_000, "net_income": 11_000_000_000, "shares_diluted": 4_230_000_000},
+        ], index=["2022", "2023", "2024", "2025"])
+        mock_extractor.get_financial_history.return_value = df_mock
+        mock_extractor.get_company_name.return_value = "SPLIT CORP"
+        mock_portfolio_mgr.get_company_profile.return_value = {"info": {"currentPrice": 56.0}}
+
+        model = PeForwardValuation(extractor=mock_extractor, portfolio_mgr=mock_portfolio_mgr)
+        res = model.evaluate_ticker("SPLITCO")
+
+        # Debe detectar recompras netas (< 0%), nunca dilucion positiva
+        assert res["dilution_or_buyback_rate_pct"] < 0.0
+
+    def test_reverse_dcf_computes_historical_cagr_when_earliest_year_is_negative(self):
+        """
+        Regresion: Si el primer anio de la ventana de 5 anios tuvo FCF negativo (ej. NFLX 2021),
+        Reverse DCF debe calcular la CAGR desde el primer FCF positivo en lugar de devolver 0.0%.
+        """
+        mock_extractor = MagicMock()
+        mock_portfolio_mgr = MagicMock()
+        mock_wacc = MagicMock()
+
+        df_mock = pd.DataFrame([
+            {"free_cash_flow": -132_000_000, "shares_diluted": 4_500_000_000},
+            {"free_cash_flow": 1_618_000_000, "shares_diluted": 4_450_000_000},
+            {"free_cash_flow": 6_925_000_000, "shares_diluted": 4_400_000_000},
+            {"free_cash_flow": 6_921_000_000, "shares_diluted": 4_390_000_000},
+            {"free_cash_flow": 9_461_000_000, "shares_diluted": 4_340_000_000},
+        ], index=["2021", "2022", "2023", "2024", "2025"])
+        mock_extractor.get_financial_history.return_value = df_mock
+        mock_extractor.get_company_name.return_value = "Netflix, Inc."
+        mock_portfolio_mgr.get_company_profile.return_value = {"info": {"currentPrice": 56.73}}
+        mock_wacc.calculate_for_ticker.return_value = {"wacc": 0.1225}
+
+        model = ReverseDcfValuation(extractor=mock_extractor, wacc_calc=mock_wacc, portfolio_mgr=mock_portfolio_mgr)
+        res = model.evaluate_ticker("NFLX")
+
+        # 1.618B -> 9.461B en 3 anios = ~80.1% CAGR
+        assert res["historical_fcf_cagr_pct"] > 50.0
+
+
+

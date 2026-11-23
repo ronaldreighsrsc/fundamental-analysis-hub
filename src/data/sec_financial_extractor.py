@@ -99,6 +99,24 @@ class SecFinancialExtractor:
     def __init__(self, downloader: Optional[SecEdgarDownloader] = None):
         self.downloader = downloader or SecEdgarDownloader()
 
+    @staticmethod
+    def _infer_fiscal_year(end_str: Optional[str], fallback_fy: Any = None) -> Optional[str]:
+        """
+        Infiere el anio fiscal real de un hecho XBRL a partir de su fecha de cierre (`end`),
+        en lugar de `fy` (que en SEC EDGAR corresponde al anio del formulario 10-K/10-Q
+        y agrupa 3 anios comparativos bajo la misma clave).
+        Para empresas con calendario 52/53 semanas que cierran entre el 1 y 7 de enero,
+        asigna el anio anterior.
+        """
+        if end_str:
+            try:
+                end_dt = datetime.strptime(end_str, "%Y-%m-%d")
+                year = end_dt.year - 1 if (end_dt.month == 1 and end_dt.day <= 7) else end_dt.year
+                return str(year)
+            except Exception:
+                pass
+        return str(fallback_fy) if fallback_fy is not None else None
+
     def _extract_fact_series(
         self, facts: Dict[str, Any], concept_keys: List[str], period_type: str = "annual"
     ) -> Dict[str, float]:
@@ -148,23 +166,27 @@ class SecFinancialExtractor:
                             days = (end - start).days
                             # Periodo anual (~330 a 390 dias)
                             if 330 <= days <= 390:
-                                fy = item.get("fy") or end.year
-                                period_key = str(fy)
+                                period_key = self._infer_fiscal_year(end_str, item.get("fy"))
                         except Exception:
                             pass
                     elif end_str:
-                        # Items instantaneos (balance sheet)
-                        fy = item.get("fy")
-                        if fy:
-                            period_key = str(fy)
-                        else:
-                            period_key = end_str[:4]
+                        # Items instantaneos (balance sheet): indexar por fecha real de cierre
+                        period_key = self._infer_fiscal_year(end_str, item.get("fy"))
 
                     if period_key:
-                        # Si ya existe para este periodo, conservar el filing mas reciente
+                        # Conservar el filing mas reciente (captura restatements y splits)
                         existing = entries_by_period.get(period_key)
-                        if not existing or filed_date > existing["filed"]:
-                            entries_by_period[period_key] = {"val": float(val), "filed": filed_date}
+                        end_key = end_str or ""
+                        if (
+                            not existing
+                            or filed_date > existing["filed"]
+                            or (filed_date == existing["filed"] and end_key > existing["end"])
+                        ):
+                            entries_by_period[period_key] = {
+                                "val": float(val),
+                                "filed": filed_date,
+                                "end": end_key,
+                            }
 
                 elif period_type == "quarterly":
                     # Filtro para 10-Q trimestrales
@@ -173,7 +195,7 @@ class SecFinancialExtractor:
 
                     fp = item.get("fp", "")
                     fy = item.get("fy")
-                    if fy and fp in ("Q1", "Q2", "Q3"):
+                    if (fy or end_str) and fp in ("Q1", "Q2", "Q3"):
                         # Si tiene duracion de fechas, filtrar para el trimestre (~65 a 105 dias)
                         if start_str and end_str:
                             try:
@@ -185,10 +207,22 @@ class SecFinancialExtractor:
                             except Exception:
                                 pass
 
-                        period_key = f"{fy}-{fp}"
+                        q_year = self._infer_fiscal_year(end_str, fy)
+                        if not q_year:
+                            continue
+                        period_key = f"{q_year}-{fp}"
                         existing = entries_by_period.get(period_key)
-                        if not existing or filed_date > existing["filed"]:
-                            entries_by_period[period_key] = {"val": float(val), "filed": filed_date}
+                        end_key = end_str or ""
+                        if (
+                            not existing
+                            or filed_date > existing["filed"]
+                            or (filed_date == existing["filed"] and end_key > existing["end"])
+                        ):
+                            entries_by_period[period_key] = {
+                                "val": float(val),
+                                "filed": filed_date,
+                                "end": end_key,
+                            }
 
         return {k: v["val"] for k, v in entries_by_period.items()}
 
@@ -217,10 +251,13 @@ class SecFinancialExtractor:
         # Ordenar cronologicamente por el indice
         df = df.sort_index()
 
-        # Rellenar o estimar Gross Profit si falta (Ventas - Costo de Ventas)
-        if "gross_profit" not in df.columns or df["gross_profit"].isnull().all():
-            if "revenue" in df.columns and "cost_of_revenue" in df.columns:
-                df["gross_profit"] = df["revenue"] - df["cost_of_revenue"]
+        # Rellenar o estimar Gross Profit faltante (Ventas - Costo de Ventas)
+        if "revenue" in df.columns and "cost_of_revenue" in df.columns:
+            estimated_gp = df["revenue"] - df["cost_of_revenue"]
+            if "gross_profit" not in df.columns:
+                df["gross_profit"] = estimated_gp
+            else:
+                df["gross_profit"] = df["gross_profit"].fillna(estimated_gp)
 
         # Calcular Flujo de Caja Libre (FCF = Operating Cash Flow - CapEx)
         if "operating_cash_flow" in df.columns:

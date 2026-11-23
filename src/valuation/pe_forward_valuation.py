@@ -151,17 +151,20 @@ class PeForwardValuation:
         if pd.isna(avg_net_margin) or avg_net_margin <= 0:
             avg_net_margin = 0.15
 
-        # 2. Tasa histórica de buyback o dilución de acciones (en ventana reciente post-splits)
+        # 2. Tasa histórica de buyback o dilución de acciones (filtrando saltos por stock splits)
         if custom_dilution_rate is not None:
             dilution_rate = custom_dilution_rate
         else:
             if "shares_diluted" in recent_df.columns:
                 shares_s = recent_df["shares_diluted"].dropna()
                 if len(shares_s) >= 2:
-                    # CAGR histórico de acciones de los últimos años
-                    n_years = len(shares_s) - 1
-                    shares_cagr = (shares_s.iloc[-1] / shares_s.iloc[0]) ** (1.0 / n_years) - 1.0
-                    dilution_rate = float(shares_cagr)
+                    yoy_changes = shares_s.pct_change().dropna()
+                    # Excluir saltos abruptos (>=40% en un anio) causados por stock splits / reverse splits
+                    clean_changes = yoy_changes[yoy_changes.abs() < 0.40]
+                    if not clean_changes.empty:
+                        dilution_rate = float(clean_changes.median())
+                    else:
+                        dilution_rate = 0.0
                 else:
                     dilution_rate = -0.015  # -1.5% promedio de recompras
             else:

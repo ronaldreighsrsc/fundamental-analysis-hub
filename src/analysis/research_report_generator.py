@@ -166,9 +166,10 @@ class ResearchReportGenerator:
         try:
             res_rel = RelativeMultiplesValuation().evaluate_ticker(ticker)
             valuations["relative_multiples"] = res_rel
-            pe_hist = res_rel.get("pe_reversion", {})
-            if pe_hist.get("fair_value_median_pe"):
-                fair_values.append(("Reversión P/E Mediana (5Y)", float(pe_hist["fair_value_median_pe"]), 1.0))
+            pe_hist = res_rel.get("pe_method_mi_favorita") or res_rel.get("pe_reversion", {})
+            fv_pe_hist = pe_hist.get("fair_value") or pe_hist.get("fair_value_median_pe")
+            if fv_pe_hist and float(fv_pe_hist) > 0:
+                fair_values.append(("Reversión P/E Mediana (5Y)", float(fv_pe_hist), 1.0))
         except Exception as e:
             valuations["relative_multiples"] = {"error": str(e)}
 
@@ -360,32 +361,36 @@ class ResearchReportGenerator:
 
         # Reversion PE
         rel_res = vals.get("relative_multiples", {})
-        pe_hist = rel_res.get("pe_reversion", {})
-        if pe_hist.get("fair_value_median_pe"):
-            fv_rev = float(pe_hist["fair_value_median_pe"])
+        pe_hist = rel_res.get("pe_method_mi_favorita") or rel_res.get("pe_reversion", {})
+        fv_rev_raw = pe_hist.get("fair_value") or pe_hist.get("fair_value_median_pe")
+        if fv_rev_raw and float(fv_rev_raw) > 0:
+            fv_rev = float(fv_rev_raw)
             mos_rev = ((fv_rev - consensus["current_price"]) / fv_rev * 100) if fv_rev else 0.0
-            md.append(f"| **Reversión a Mediana P/E (5Y)** | `${fv_rev:.2f}` | `{mos_rev:+.1f}%` | Basado en P/E mediano histórico de {pe_hist.get('median_5y_pe', 0.0):.1f}x |")
+            med_pe = pe_hist.get("historical_pe_median") or pe_hist.get("median_5y_pe", 0.0)
+            md.append(f"| **Reversión a Mediana P/E (5Y)** | `${fv_rev:.2f}` | `{mos_rev:+.1f}%` | Basado en P/E mediano histórico de {med_pe:.1f}x |")
 
         md.append("")
 
         # Reverse DCF Insight
         rdcf_res = vals.get("reverse_dcf", {})
-        if rdcf_res.get("status") == "OK":
-            implied_g = rdcf_res.get("implied_growth_rate_pct", 0.0)
+        implied_g = rdcf_res.get("implied_growth_pct", rdcf_res.get("implied_growth_rate_pct"))
+        if implied_g is not None and "error" not in rdcf_res and rdcf_res.get("status") != "ERROR_INPUTS":
             md.append("### Análisis de Valuación Inversa (Reverse DCF)")
             md.append(f"> **Expectativa Implícita del Mercado:** Para justificar el precio actual de `${consensus['current_price'] or 0.0:.2f}`, la compañía debe crecer su Free Cash Flow a una tasa anual compuesta (**CAGR**) de **{implied_g:.2f}%** durante los próximos 5 años.")
             md.append("")
 
         # Relative Multiples Insight
         rel_res = vals.get("relative_multiples", {})
-        if rel_res.get("status") == "OK":
+        if "error" not in rel_res and rel_res.get("peg_analysis"):
             peg = rel_res.get("peg_analysis", {})
             md.append("### Múltiplos Relativos & Ratio PEG de Peter Lynch")
             peg_val = f"{peg.get('peg_ratio'):.2f}" if peg.get('peg_ratio') else "N/A"
             md.append(f"- **Ratio PEG de Peter Lynch:** `{peg_val}` — *{peg.get('status', 'N/A')}*")
-            pe_hist = rel_res.get("pe_reversion", {})
-            if pe_hist.get("fair_value_median_pe"):
-                md.append(f"- **Fair Value por Reversión a P/E Mediana Histórico (5Y):** `${pe_hist.get('fair_value_median_pe'):.2f}` (P/E Mediano: {pe_hist.get('median_5y_pe', 0.0):.1f}x)")
+            pe_hist = rel_res.get("pe_method_mi_favorita") or rel_res.get("pe_reversion", {})
+            fv_pe_h = pe_hist.get("fair_value") or pe_hist.get("fair_value_median_pe")
+            med_pe_h = pe_hist.get("historical_pe_median") or pe_hist.get("median_5y_pe", 0.0)
+            if fv_pe_h and float(fv_pe_h) > 0:
+                md.append(f"- **Fair Value por Reversión a P/E Mediana Histórico (5Y):** `${float(fv_pe_h):.2f}` (P/E Mediano: {med_pe_h:.1f}x)")
             md.append("")
 
         md.append("---")

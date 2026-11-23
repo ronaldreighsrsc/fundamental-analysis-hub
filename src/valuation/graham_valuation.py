@@ -128,7 +128,27 @@ class GrahamValuation:
         if growth_rate is None:
             eps_series = df_hist["eps_diluted"].dropna() if "eps_diluted" in df_hist.columns else df_hist["eps_basic"].dropna()
             eps_positive = eps_series[eps_series > 0]
-            if len(eps_positive) >= 3:
+
+            # Evitar distorsion por stock splits (salto >=40% en shares_diluted en 1 anio)
+            has_split_jump = False
+            if "shares_diluted" in df_hist.columns:
+                sh_recent = df_hist["shares_diluted"].dropna().tail(6)
+                if len(sh_recent) >= 2:
+                    has_split_jump = bool((sh_recent.pct_change().dropna().abs() >= 0.40).any())
+
+            if has_split_jump and "net_income" in df_hist.columns:
+                ni_pos = df_hist["net_income"].dropna()
+                ni_pos = ni_pos[ni_pos > 0]
+                if len(ni_pos) >= 3:
+                    years_back = min(5, len(ni_pos) - 1)
+                    start_ni = ni_pos.iloc[-(years_back + 1)]
+                    end_ni = ni_pos.iloc[-1]
+                    cagr = ((end_ni / start_ni) ** (1 / years_back) - 1) * 100
+                    growth_rate = max(2.0, min(cagr, 25.0))
+                    growth_source = "CAGR Beneficio Neto SEC (ajustado por split)"
+                else:
+                    growth_rate = 5.0
+            elif len(eps_positive) >= 3:
                 years_back = min(5, len(eps_positive) - 1)
                 start_eps = eps_positive.iloc[-(years_back + 1)]
                 end_eps = eps_positive.iloc[-1]

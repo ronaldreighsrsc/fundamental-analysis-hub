@@ -217,6 +217,47 @@ class EquityAnalyzer(AssetAnalyzer):
             },
         }
 
+    def _extract_statement_fcf(self, cf_row: Dict[str, Any]):
+        """Extrae FCF GAAP de un periodo de flujo de caja (Free Cash Flow u OCF + CapEx)."""
+        if not isinstance(cf_row, dict):
+            return None
+        fcf = cf_row.get("Free Cash Flow")
+        if fcf is not None and fcf == fcf:  # not NaN
+            return float(fcf)
+        ocf = cf_row.get("Operating Cash Flow")
+        capex = cf_row.get("Capital Expenditure")
+        if ocf is not None and ocf == ocf and capex is not None and capex == capex:
+            # En yfinance Capital Expenditure suele venir negativo
+            return float(ocf) + float(capex) if float(capex) <= 0 else float(ocf) - float(capex)
+        return None
+
+    def _get_reliable_free_cash_flow(self):
+        """
+        Calcula el Free Cash Flow GAAP confiable priorizando los estados financieros
+        (suma TTM de los ultimos 4 trimestres o ultimo anual) sobre `info.freeCashflow`,
+        que en yfinance puede distorsionarse en empresas intensivas en amortizacion (ej. NFLX).
+        """
+        q_cf = self.quarterly.get("cash_flow", {})
+        if isinstance(q_cf, dict) and q_cf:
+            valid_q = []
+            for period in sorted(q_cf.keys(), reverse=True):
+                val = self._extract_statement_fcf(q_cf[period])
+                if val is not None:
+                    valid_q.append(val)
+                if len(valid_q) == 4:
+                    break
+            if len(valid_q) == 4:
+                return sum(valid_q)
+
+        a_cf = self.annual.get("cash_flow", {})
+        if isinstance(a_cf, dict) and a_cf:
+            for period in sorted(a_cf.keys(), reverse=True):
+                val = self._extract_statement_fcf(a_cf[period])
+                if val is not None:
+                    return val
+
+        return self.info.get("freeCashflow")
+
     def get_summary(self) -> Dict[str, Any]:
         """Resumen ejecutivo rapido del equity."""
         return {
@@ -230,7 +271,7 @@ class EquityAnalyzer(AssetAnalyzer):
             "dividend_yield": self.info.get("dividendYield"),
             "roe": self.info.get("returnOnEquity"),
             "gross_margin": self.info.get("grossMargins"),
-            "free_cash_flow": self.info.get("freeCashflow"),
+            "free_cash_flow": self._get_reliable_free_cash_flow(),
             "held_percent_insiders": self.info.get("heldPercentInsiders"),
             "held_percent_institutions": self.info.get("heldPercentInstitutions"),
             "moat_rating": self.get_moat_analysis().get("rating"),

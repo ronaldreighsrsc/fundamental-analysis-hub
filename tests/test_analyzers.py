@@ -151,3 +151,37 @@ def test_reit_analyzer_ffo_calculation(sample_reit_data):
     
     # FFO Payout Ratio = 1800M / 2500M = 72%
     assert round(ffo_analysis.get("ffo_payout_ratio"), 2) == 0.72
+
+
+def test_equity_analyzer_prefers_gaap_ttm_fcf_over_distorted_yfinance_info():
+    """
+    Regresion: yfinance `info.freeCashflow` puede inflar el FCF (ej. NFLX $25.5B vs $11.4B GAAP).
+    EquityAnalyzer debe priorizar la suma TTM de `quarterly.cash_flow` GAAP cuando esta disponible.
+    """
+    data = {
+        "ticker": "NFLX",
+        "info": {
+            "longName": "Netflix, Inc.",
+            "currentPrice": 56.73,
+            "freeCashflow": 25_475_807_232,  # Distorsionado en info
+        },
+        "annual": {
+            "cash_flow": {
+                "2025-12-31": {"Free Cash Flow": 9_461_053_000}
+            }
+        },
+        "quarterly": {
+            "cash_flow": {
+                "2026-09-30": {"Free Cash Flow": 2_883_513_000},
+                "2026-06-30": {"Free Cash Flow": 1_525_168_000},
+                "2026-03-31": {"Free Cash Flow": 5_094_075_000},
+                "2025-12-31": {"Free Cash Flow": 1_872_307_000},
+                "2025-09-30": {"Free Cash Flow": 2_660_455_000},
+            }
+        },
+    }
+    analyzer = EquityAnalyzer("NFLX", data)
+    summary = analyzer.get_summary()
+    expected_ttm = 2_883_513_000 + 1_525_168_000 + 5_094_075_000 + 1_872_307_000
+    assert summary["free_cash_flow"] == expected_ttm
+
